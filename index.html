@@ -1,262 +1,256 @@
 
 <!DOCTYPE html>
-<html lang="pt-PT">
+<html lang="pt">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#101827">
-  <title>Futebol Stats</title>
-  <style>
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      background: #101827;
-      color: #f1f5f9;
-      font-family: Arial, sans-serif;
-    }
-    header {
-      background: #172337;
-      padding: 22px 16px;
-      border-bottom: 1px solid #344155;
-    }
-    header h1 { margin: 0; font-size: 25px; }
-    header p { color: #aab8cb; font-size: 14px; }
-    main { max-width: 900px; margin: auto; padding: 16px; }
-    .panel {
-      background: #172337;
-      border: 1px solid #344155;
-      border-radius: 12px;
-      padding: 16px;
-      margin-bottom: 16px;
-    }
-    .muted { color: #aab8cb; font-size: 14px; line-height: 1.5; }
-    .stats {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 10px;
-    }
-    .stat { background: #101827; padding: 13px; border-radius: 9px; }
-    .stat strong { display: block; font-size: 23px; margin-bottom: 5px; }
-    .stat span { color: #aab8cb; font-size: 12px; }
-    .table-wrap { overflow-x: auto; }
-    table { width: 100%; border-collapse: collapse; font-size: 13px; }
-    th, td {
-      text-align: left;
-      padding: 11px 8px;
-      border-bottom: 1px solid #344155;
-      white-space: nowrap;
-    }
-    th { color: #aab8cb; }
-    button {
-      border: 0; border-radius: 8px; padding: 12px 16px;
-      background: #55d6a0; color: #10251e;
-      font-weight: bold; font-size: 14px;
-    }
-    .status { font-size: 13px; color: #55d6a0; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Futebol Stats</title>
+<style>
+:root{color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:#0b1120;color:#e8edf7;font-family:Arial,sans-serif}
+header{padding:24px 16px;background:#111c30;border-bottom:1px solid #26344d}
+main{max-width:1100px;margin:auto;padding:18px}
+h1{margin:0 0 8px;color:#67e8a5}
+h2{font-size:19px;margin-top:26px}
+p,.muted{color:#aab7cc;font-size:13px}
+.controls,.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:12px}
+.panel,.stat{background:#131e31;border:1px solid #283650;border-radius:12px;padding:14px}
+label{display:block;font-size:12px;color:#aab7cc;margin-bottom:7px}
+select,button{width:100%;padding:12px;border-radius:8px;border:1px solid #3a4b66;background:#0c1628;color:white;font-size:14px}
+button{background:#147d52;border:0;font-weight:bold;cursor:pointer}
+button:disabled{opacity:.5}
+.stat strong{display:block;font-size:24px;margin-top:8px;color:#67e8a5}
+.stat span{font-size:12px;color:#aab7cc}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{text-align:left;padding:10px 8px;border-bottom:1px solid #29364b;white-space:nowrap}
+th{color:#67e8a5}
+.tablewrap{overflow-x:auto}
+#status{margin:14px 0;color:#f5cc77}
+small{color:#9cabc2}
+</style>
 </head>
 <body>
-  <header>
-    <h1>⚽ Futebol Stats</h1>
-    <p>Análise estatística de futebol</p>
-  </header>
-
-  <main>
-    <section class="panel">
-      <h2>Primeira Liga portuguesa</h2>
-      <p class="muted">
-        Dados históricos do Open Matchday. As estatísticas
-        dependem da disponibilidade de cada jogo.
-      </p>
-      <button id="load">Carregar jogos</button>
-      <p id="status" class="status">Pronto para carregar os dados.</p>
-    </section>
-
-    <section class="panel">
-      <h2>Médias dos jogos com dados de cantos</h2>
-      <div class="stats">
-        <div class="stat">
-          <strong id="games">—</strong>
-          <span>Jogos carregados</span>
-        </div>
-        <div class="stat">
-          <strong id="cornerGames">—</strong>
-          <span>Jogos com cantos registados</span>
-        </div>
-        <div class="stat">
-          <strong id="corners">—</strong>
-          <span>Média de cantos totais</span>
-        </div>
-        <div class="stat">
-          <strong id="goals">—</strong>
-          <span>Média de golos totais</span>
-        </div>
+<header>
+  <h1>⚽ Futebol Stats</h1>
+  <p>Estatísticas de equipas, cantos e golos — várias competições.</p>
+</header>
+<main>
+  <section class="panel">
+    <div class="controls">
+      <div>
+        <label for="league">Competição</label>
+        <select id="league">
+          <option value="POR_1_primeira-liga">Portugal — Primeira Liga</option>
+          <option value="ENG_1_premier-league">Inglaterra — Premier League</option>
+          <option value="ESP_1_la-liga">Espanha — La Liga</option>
+          <option value="ITA_1_serie-a">Itália — Serie A</option>
+          <option value="GER_1_bundesliga">Alemanha — Bundesliga</option>
+          <option value="FRA_1_ligue-1">França — Ligue 1</option>
+          <option value="NED_1_eredivisie">Países Baixos — Eredivisie</option>
+          <option value="BRA_1_serie-a">Brasil — Brasileirão Série A</option>
+          <option value="UEFA_1_champions-league">Liga dos Campeões</option>
+          <option value="BEL_1_pro-league">Bélgica — Pro League</option>
+          <option value="TUR_1_super-lig">Turquia — Süper Lig</option>
+          <option value="ENG_2_championship">Inglaterra — Championship</option>
+          <option value="USA_1_mls">Estados Unidos — MLS</option>
+        </select>
       </div>
-    </section>
-
-    <section class="panel">
-      <h2>Últimos resultados disponíveis</h2>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Data</th>
-              <th>Casa</th>
-              <th>Resultado</th>
-              <th>Fora</th>
-              <th>Cantos</th>
-            </tr>
-          </thead>
-          <tbody id="matches">
-            <tr><td colspan="5">Ainda não foram carregados jogos.</td></tr>
-          </tbody>
-        </table>
+      <div>
+        <label for="season">Época</label>
+        <select id="season">
+          <option value="2627">2026/27</option>
+          <option value="2526">2025/26</option>
+          <option value="2425">2024/25</option>
+          <option value="2324">2023/24</option>
+        </select>
       </div>
-    </section>
+      <div>
+        <label for="team">Equipa</label>
+        <select id="team"><option value="">Carrega os jogos primeiro</option></select>
+      </div>
+      <div>
+        <label for="period">Amostra</label>
+        <select id="period">
+          <option value="5">Últimos 5 jogos</option>
+          <option value="10">Últimos 10 jogos</option>
+          <option value="all">Todos os jogos</option>
+        </select>
+      </div>
+    </div>
+    <p><button id="load">Carregar jogos e estatísticas</button></p>
+    <div id="status" role="status">Seleciona a competição e carrega os jogos.</div>
+  </section>
 
-    <footer class="muted">
-      Fonte: <a href="https://github.com/oladeeayo/open-matchday"
-      style="color:#55d6a0">Open Matchday</a>.
-      Dados não fornecidos aparecem como indisponíveis.
-    </footer>
-  </main>
+  <h2 id="teamTitle">Estatísticas da equipa</h2>
+  <div class="stats" id="stats"></div>
 
-  <script>
-    const csvUrl =
-      "https://cdn.jsdelivr.net/gh/oladeeayo/open-matchday@master/data/POR_1_primeira-liga/results_2627.csv";
+  <h2>Desempenho em casa e fora</h2>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Local</th><th>Jogos</th><th>Cantos a favor</th><th>Cantos contra</th><th>Total cantos</th><th>Over 9,5</th></tr></thead>
+      <tbody id="venueStats"><tr><td colspan="6">Carrega os jogos para começar.</td></tr></tbody>
+    </table>
+  </div>
 
-    const $ = id => document.getElementById(id);
+  <h2>Jogos recentes da equipa</h2>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Data</th><th>Casa</th><th>Resultado</th><th>Fora</th><th>Cantos</th><th>Total</th></tr></thead>
+      <tbody id="recent"><tr><td colspan="6">Sem dados carregados.</td></tr></tbody>
+    </table>
+  </div>
 
-    // Lê campos CSV, incluindo valores entre aspas.
-    function parseCSV(text) {
-      const lines = text.trim().split(/\r?\n/);
-      if (lines.length < 2) return [];
+  <p><small>Fonte: <a href="https://github.com/oladeeayo/open-matchday" target="_blank" rel="noopener" style="color:#67e8a5">open-matchday</a>. Dados atualizados pela fonte diariamente, não em direto. Estatísticas de cantos dependem da disponibilidade de cada jogo.</small></p>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+let matches = [];
 
-      function splitLine(line) {
-        const result = [];
-        let value = "";
-        let quoted = false;
-
-        for (let i = 0; i < line.length; i++) {
-          const c = line[i];
-
-          if (c === '"' && quoted && line[i + 1] === '"') {
-            value += '"';
-            i++;
-          } else if (c === '"') {
-            quoted = !quoted;
-          } else if (c === "," && !quoted) {
-            result.push(value);
-            value = "";
-          } else {
-            value += c;
-          }
-        }
-
-        result.push(value);
-        return result;
-      }
-
-      const headers = splitLine(lines[0]).map(h => h.trim());
-
-      return lines.slice(1)
-        .filter(line => line.trim())
-        .map(line => {
-          const values = splitLine(line);
-          const row = {};
-          headers.forEach((header, i) => {
-            row[header] = (values[i] ?? "").trim();
-          });
-          return row;
-        });
+function parseCSV(text) {
+  const rows = [];
+  let row = [], field = "", quoted = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (quoted) {
+      if (c === '"' && text[i+1] === '"') { field += '"'; i++; }
+      else if (c === '"') quoted = false;
+      else field += c;
+    } else {
+      if (c === '"') quoted = true;
+      else if (c === ',') { row.push(field); field = ""; }
+      else if (c === '\n') {
+        row.push(field); rows.push(row); row = []; field = "";
+      } else if (c !== '\r') field += c;
     }
+  }
+  if (field || row.length) { row.push(field); rows.push(row); }
+  if (!rows.length) return [];
+  const headers = rows.shift().map(x => x.trim());
+  return rows.filter(r => r.length > 1).map(r => {
+    const obj = {};
+    headers.forEach((h, i) => obj[h] = (r[i] || "").trim());
+    return obj;
+  });
+}
 
-    function numberOrNull(value) {
-      if (value === undefined || value === null || value === "") {
-        return null;
-      }
-      const n = Number(value);
-      return Number.isFinite(n) ? n : null;
-    }
+function num(v) {
+  if (v === undefined || v === null || String(v).trim() === "") return null;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+}
+function avg(values) {
+  const valid = values.filter(v => v !== null && Number.isFinite(v));
+  return valid.length ? valid.reduce((a,b) => a+b,0) / valid.length : null;
+}
+function fmt(v) {
+  return v === null || !Number.isFinite(v) ? "N/D" : v.toFixed(2);
+}
+function pct(n, d) {
+  return d ? (100*n/d).toFixed(1) + "%" : "N/D";
+}
+function teamMatches(team) {
+  return matches.filter(m => m.home === team || m.away === team)
+    .sort((a,b) => (b.date || "").localeCompare(a.date || ""));
+}
+function statsFor(games, team) {
+  const rows = games.map(m => {
+    const home = m.home === team;
+    const gf = num(home ? m.ft_home : m.ft_away);
+    const ga = num(home ? m.ft_away : m.ft_home);
+    const cf = num(home ? m.home_corners : m.away_corners);
+    const ca = num(home ? m.away_corners : m.home_corners);
+    return {m,home,gf,ga,cf,ca,total:cf!==null&&ca!==null?cf+ca:null};
+  });
+  const withCorners = rows.filter(r => r.total !== null);
+  const over = line => withCorners.filter(r => r.total > line).length;
+  return {
+    rows, played: rows.length,
+    goals: avg(rows.map(r => r.gf)),
+    goalsAgainst: avg(rows.map(r => r.ga)),
+    gf: avg(rows.map(r => r.cf)),
+    ga: avg(rows.map(r => r.ca)),
+    total: avg(rows.map(r => r.total)),
+    overCounts: Object.fromEntries([8.5,9.5,10.5,11.5,12.5].map(l => [l,{n:over(l),d:withCorners.length}])),
+    cornersN: withCorners.length
+  };
+}
+function statCard(label, value, note="") {
+  return `<div class="stat"><span>${label}</span><strong>${value}</strong><small>${note}</small></div>`;
+}
+function render() {
+  const team = $("team").value;
+  if (!team) return;
+  const all = teamMatches(team);
+  const p = $("period").value;
+  const games = p === "all" ? all : all.slice(0, Number(p));
+  const s = statsFor(games, team);
+  $("teamTitle").textContent = team + " — " + (p === "all" ? "todos os jogos" : "últimos " + p + " jogos");
+  $("stats").innerHTML = [
+    statCard("Jogos analisados", s.played),
+    statCard("Média de golos marcados", fmt(s.goals)),
+    statCard("Média de golos sofridos", fmt(s.goalsAgainst)),
+    statCard("Cantos a favor / jogo", fmt(s.gf), "Amostra: " + s.cornersN + " jogos com cantos"),
+    statCard("Cantos contra / jogo", fmt(s.ga)),
+    statCard("Média total de cantos", fmt(s.total)),
+    ...[8.5,9.5,10.5,11.5,12.5].map(l =>
+      statCard("Over " + l + " cantos", pct(s.overCounts[l].n,s.overCounts[l].d),
+        s.overCounts[l].n + " de " + s.overCounts[l].d + " jogos com dados"))
+  ].join("");
 
-    function average(values) {
-      if (!values.length) return "—";
-      return (values.reduce((a, b) => a + b, 0) / values.length)
-        .toFixed(2);
-    }
+  const venues = [
+    ["Casa", all.filter(m => m.home === team)],
+    ["Fora", all.filter(m => m.away === team)]
+  ];
+  $("venueStats").innerHTML = venues.map(([label, arr]) => {
+    const v = statsFor(arr, team);
+    const n = v.overCounts[9.5];
+    return `<tr><td>${label}</td><td>${v.played}</td><td>${fmt(v.gf)}</td><td>${fmt(v.ga)}</td><td>${fmt(v.total)}</td><td>${pct(n.n,n.d)}</td></tr>`;
+  }).join("");
 
-    async function loadMatches() {
-      $("load").disabled = true;
-      $("status").textContent = "A carregar os dados…";
+  $("recent").innerHTML = games.slice(0,20).map(m => {
+    const hc = num(m.home_corners), ac = num(m.away_corners);
+    const total = hc !== null && ac !== null ? hc+ac : null;
+    return `<tr><td>${m.date || "—"}</td><td>${m.home}</td><td>${m.ft_home ?? "—"} - ${m.ft_away ?? "—"}</td><td>${m.away}</td><td>${hc === null || ac === null ? "N/D" : hc+" - "+ac}</td><td>${total === null ? "N/D" : total}</td></tr>`;
+  }).join("") || '<tr><td colspan="6">Não existem jogos para mostrar.</td></tr>';
+}
 
-      try {
-        const response = await fetch(csvUrl);
-        if (!response.ok) throw new Error("HTTP " + response.status);
-
-        const text = await response.text();
-        const rows = parseCSV(text);
-
-        if (!rows.length) throw new Error("O CSV não contém jogos.");
-
-        const played = rows.filter(row =>
-          numberOrNull(row.ft_home) !== null &&
-          numberOrNull(row.ft_away) !== null
-        );
-
-        const withCorners = played.filter(row =>
-          numberOrNull(row.home_corners) !== null &&
-          numberOrNull(row.away_corners) !== null
-        );
-
-        const goalTotals = played.map(row =>
-          numberOrNull(row.ft_home) + numberOrNull(row.ft_away)
-        );
-
-        const cornerTotals = withCorners.map(row =>
-          numberOrNull(row.home_corners) +
-          numberOrNull(row.away_corners)
-        );
-
-        $("games").textContent = played.length;
-        $("cornerGames").textContent = withCorners.length;
-        $("corners").textContent = average(cornerTotals);
-        $("goals").textContent = average(goalTotals);
-
-        const recent = [...played].reverse().slice(0, 20);
-
-        $("matches").innerHTML = recent.map(row => {
-          const home = row.home || "—";
-          const away = row.away || "—";
-          const date = row.date || "—";
-          const score = `${row.ft_home}–${row.ft_away}`;
-
-          const hc = numberOrNull(row.home_corners);
-          const ac = numberOrNull(row.away_corners);
-          const corners = hc === null || ac === null
-            ? "—"
-            : `${hc}–${ac}`;
-
-          return `<tr>
-            <td>${date}</td>
-            <td>${home}</td>
-            <td>${score}</td>
-            <td>${away}</td>
-            <td>${corners}</td>
-          </tr>`;
-        }).join("");
-
-        $("status").textContent =
-          "Dados carregados. Fonte: Open Matchday.";
-      } catch (error) {
-        $("status").textContent =
-          "Não foi possível carregar os dados. Verifica a ligação e tenta novamente.";
-        console.error(error);
-      } finally {
-        $("load").disabled = false;
-      }
-    }
-
-    $("load").addEventListener("click", loadMatches);
-  </script>
+async function loadGames() {
+  const league = $("league").value;
+  const season = $("season").value;
+  $("load").disabled = true;
+  $("status").textContent = "A carregar dados…";
+  try {
+    const url = `https://cdn.jsdelivr.net/gh/oladeeayo/open-matchday@master/data/${league}/results_${season}.csv`;
+    const response = await fetch(url);
+    if (!response.ok) throw new Error("Não foi possível encontrar os dados desta competição/época (HTTP " + response.status + ").");
+    const text = await response.text();
+    if (!text.includes("home,") || text.startsWith("<!DOCTYPE")) throw new Error("A fonte não devolveu um CSV válido.");
+    const data = parseCSV(text);
+    matches = data.filter(m => num(m.ft_home) !== null && num(m.ft_away) !== null);
+    if (!matches.length) throw new Error("Ainda não existem resultados disponíveis nesta competição/época.");
+    const teams = [...new Set(matches.flatMap(m => [m.home,m.away]).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+    $("team").innerHTML = teams.map(t => `<option value="${t.replace(/&/g,"&amp;").replace(/"/g,"&quot;")}">${t.replace(/&/g,"&amp;").replace(/</g,"&lt;")}</option>`).join("");
+    $("status").textContent = `${matches.length} jogos carregados. ${teams.length} equipas encontradas.`;
+    render();
+  } catch (err) {
+    $("status").textContent = "Erro: " + err.message + " Experimenta outra época ou competição.";
+    $("stats").innerHTML = "";
+    $("venueStats").innerHTML = "";
+    $("recent").innerHTML = "";
+  } finally {
+    $("load").disabled = false;
+  }
+}
+$("load").addEventListener("click", loadGames);
+$("league").addEventListener("change", () => {
+  $("status").textContent = "Carrega os dados da nova competição.";
+});
+$("season").addEventListener("change", () => {
+  $("status").textContent = "Carrega os dados da nova época.";
+});
+$("team").addEventListener("change", render);
+$("period").addEventListener("change", render);
+</script>
 </body>
 </html>
