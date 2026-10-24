@@ -249,7 +249,10 @@ $("league").addEventListener("change", () => {
 $("season").addEventListener("change", () => {
   $("status").textContent = "Carrega os dados da nova época.";
 });
-$("team").addEventListener("change", render);
+$("team").addEventListener("input", render);
+$("team").addEventListener("change", () => {
+  render();
+});
 $("period").addEventListener("change", render);
 </script>
 </body>
