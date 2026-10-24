@@ -221,7 +221,7 @@ async function loadGames() {
   $("load").disabled = true;
   $("status").textContent = "A carregar dados…";
   try {
-    const url = `https://cdn.jsdelivr.net/gh/oladeeayo/open-matchday@master/data/${league}/results_${season}.csv`;
+    const url = `https://raw.githubusercontent.com/oladeeayo/open-matchday/master/data/${league}/results_${season}.csv`;
     const response = await fetch(url);
     if (!response.ok) throw new Error("Não foi possível encontrar os dados desta competição/época (HTTP " + response.status + ").");
     const text = await response.text();
