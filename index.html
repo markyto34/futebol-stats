@@ -80,6 +80,83 @@ small{color:#9cabc2}
     </div>
     <p><button id="load">Carregar jogos e estatísticas</button></p>
     <div id="status" role="status">Seleciona a competição e carrega os jogos.</div>
+    
+<h2>Próximos jogos</h2>
+<p class="muted">Consulta os jogos futuros da competição selecionada.</p>
+<p><button id="loadFixtures">Carregar próximos jogos</button></p>
+<div id="fixtureStatus" role="status">Ainda não carregaste os próximos jogos.</div>
+<div class="tablewrap">
+  <table>
+    <thead>
+      <tr>
+        <th>Data</th>
+        <th>Casa</th>
+        <th>Fora</th>
+        <th>Jornada</th>
+      </tr>
+    </thead>
+    <tbody id="fixtures">
+      <tr><td colspan="4">Sem jogos carregados.</td></tr>
+    </tbody>
+  </table>
+</div>
+    
+async function loadFixtures() {
+  const league = $("league").value;
+  const season = $("season").value;
+  const button = $("loadFixtures");
+
+  button.disabled = true;
+  $("fixtureStatus").textContent = "A procurar próximos jogos…";
+
+  try {
+    const url = `https://raw.githubusercontent.com/oladeeayo/open-matchday/master/data/${league}/fixtures_${season}.csv`;
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      throw new Error("Calendário indisponível para esta competição/época.");
+    }
+
+    const text = await response.text();
+    const data = parseCSV(text);
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const upcoming = data
+      .filter(m => m.home && m.away && m.date)
+      .filter(m => {
+        const date = new Date(m.date + "T00:00:00");
+        return !Number.isNaN(date.getTime()) && date >= today;
+      })
+      .sort((a, b) => {
+        const dateCompare = a.date.localeCompare(b.date);
+        return dateCompare || (a.time || "").localeCompare(b.time || "");
+      });
+
+    $("fixtures").innerHTML = upcoming.length
+      ? upcoming.map(m => `
+          <tr>
+            <td>${m.date}${m.time ? " " + m.time : ""}</td>
+            <td>${m.home}</td>
+            <td>${m.away}</td>
+            <td>${m.gw || "—"}</td>
+          </tr>
+        `).join("")
+      : '<tr><td colspan="4">Não foram encontrados jogos futuros.</td></tr>';
+
+    $("fixtureStatus").textContent =
+      `${upcoming.length} jogos futuros encontrados.`;
+  } catch (err) {
+    $("fixtureStatus").textContent = "Erro: " + err.message;
+  } finally {
+    button.disabled = false;
+  }
+}
+
+$("loadFixtures").addEventListener("click", loadFixtures);
+    
+    
   </section>
 
   <h2 id="teamTitle">Estatísticas da equipa</h2>
