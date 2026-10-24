@@ -78,11 +78,13 @@ a{color:#67e8a5}
       <select id="team"><option value="">Carrega os dados primeiro</option></select>
     </div>
     <div><label for="period">Amostra estatística</label>
-      <select id="period">
-        <option value="5">Últimos 5 jogos</option>
-        <option value="10" selected>Últimos 10 jogos</option>
-        <option value="all">Todos os jogos</option>
+      <select id="fixtureFilter">
+  <option value="7" selected>Próximos 7 dias</option>
+  <option value="14">Próximos 14 dias</option>
+  <option value="30">Próximos 30 dias</option>
+  <option value="all">Todos os jogos disponíveis</option>
       </select>
+      
     </div>
   </div>
   <p><button id="load">Carregar dados da competição</button></p>
@@ -451,6 +453,164 @@ function renderStats(team) {
   }).join("") : `<tr><td colspan="6">Não existem jogos para esta equipa.</td></tr>`;
 }
 
+/* Modelo inicial de golos esperados e Ambas Marcam. */
+
+function poissonAtLeastOne(lambda) {
+  if (lambda === null || !Number.isFinite(lambda) || lambda < 0) {
+    return null;
+  }
+  return 1 - Math.exp(-lambda);
+}
+
+function leagueGoalAverages() {
+  return {
+    home: average(matches.map(m => m.homeGoals)),
+    away: average(matches.map(m => m.awayGoals))
+  };
+}
+
+function shrinkAverage(value, count, baseline, prior = 5) {
+  if (baseline === null || !Number.isFinite(baseline)) return value;
+  if (value === null || !Number.isFinite(value)) return baseline;
+  return (value * count + baseline * prior) / (count + prior);
+}
+
+function expectedGoalsForMatch(home, away) {
+  if (!home || !away || home === away) return null;
+
+  const league = leagueGoalAverages();
+  if (league.home === null || league.away === null) return null;
+
+  const homeGames = recentTeamGames(home, "home", 10);
+  const awayGames = recentTeamGames(away, "away", 10);
+
+  const homeScored = average(homeGames.map(m => m.homeGoals));
+  const homeConceded = average(homeGames.map(m => m.awayGoals));
+  const awayScored = average(awayGames.map(m => m.awayGoals));
+  const awayConceded = average(awayGames.map(m => m.homeGoals));
+
+  const homeAttack = shrinkAverage(
+    homeScored, homeGames.length, league.home
+  );
+  const homeDefence = shrinkAverage(
+    homeConceded, homeGames.length, league.away
+  );
+  const awayAttack = shrinkAverage(
+    awayScored, awayGames.length, league.away
+  );
+  const awayDefence = shrinkAverage(
+    awayConceded, awayGames.length, league.home
+  );
+
+  if (
+    homeAttack === null || homeDefence === null ||
+    awayAttack === null || awayDefence === null ||
+    league.home <= 0 || league.away <= 0
+  ) return null;
+
+  // Combina ataque próprio, defesa adversária e médias da competição.
+  const lambdaHome = homeAttack * awayDefence / league.home;
+  const lambdaAway = awayAttack * homeDefence / league.away;
+
+  // Limites de segurança para evitar valores extremos.
+  const h = Math.max(0.05, Math.min(5, lambdaHome));
+  const a = Math.max(0.05, Math.min(5, lambdaAway));
+
+  const pHomeScores = poissonAtLeastOne(h);
+  const pAwayScores = poissonAtLeastOne(a);
+
+  const bttsYes = pHomeScores * pAwayScores;
+  const bttsNo = 1 - bttsYes;
+
+  return {
+    lambdaHome: h,
+    lambdaAway: a,
+    bttsYes,
+    bttsNo,
+    homeSample: homeGames.length,
+    awaySample: awayGames.length
+  };
+}
+
+function renderBttsAnalysis() {
+  const home = $("bttsHome").value;
+  const away = $("bttsAway").value;
+  const result = $("bttsResult");
+
+  if (!home || !away) {
+    result.innerHTML = "<p>Seleciona as duas equipas.</p>";
+    return;
+  }
+
+  if (home === away) {
+    result.innerHTML = "<p>Escolhe duas equipas diferentes.</p>";
+    return;
+  }
+
+  const p = expectedGoalsForMatch(home, away);
+
+  if (!p) {
+    result.innerHTML =
+      "<p>Não existem dados suficientes para calcular esta previsão.</p>";
+    return;
+  }
+
+  const yesPercent = p.bttsYes * 100;
+  const noPercent = p.bttsNo * 100;
+  const yesOdds = p.bttsYes > 0 ? 1 / p.bttsYes : null;
+  const noOdds = p.bttsNo > 0 ? 1 / p.bttsNo : null;
+  const sampleTotal = p.homeSample + p.awaySample;
+
+  let reliability = "Amostra reduzida";
+  if (p.homeSample >= 8 && p.awaySample >= 8) {
+    reliability = "Amostra razoável";
+  }
+  if (p.homeSample >= 10 && p.awaySample >= 10) {
+    reliability = "Amostra de 10 jogos por equipa";
+  }
+
+  result.innerHTML = `
+    <h3>${esc(home)} vs. ${esc(away)}</h3>
+    <div class="stats">
+      <div class="stat">
+        <span>Golos esperados — casa</span>
+        <strong>${fmt(p.lambdaHome, 2)}</strong>
+      </div>
+      <div class="stat">
+        <span>Golos esperados — fora</span>
+        <strong>${fmt(p.lambdaAway, 2)}</strong>
+      </div>
+      <div class="stat">
+        <span>Ambas Marcam — Sim</span>
+        <strong>${fmt(yesPercent, 1)}%</strong>
+      </div>
+      <div class="stat">
+        <span>Ambas Marcam — Não</span>
+        <strong>${fmt(noPercent, 1)}%</strong>
+      </div>
+      <div class="stat">
+        <span>Odd justa — Sim</span>
+        <strong>${fmt(yesOdds, 2)}</strong>
+      </div>
+      <div class="stat">
+        <span>Odd justa — Não</span>
+        <strong>${fmt(noOdds, 2)}</strong>
+      </div>
+    </div>
+    <p class="muted">
+      ${esc(reliability)}. Foram considerados até 10 jogos em casa
+      da equipa da casa e até 10 jogos fora da visitante.
+      Amostras: ${p.homeSample} e ${p.awaySample} jogos.
+    </p>
+    <p class="muted">
+      Modelo inicial de Poisson com ajustamento às médias da competição.
+      Assume independência entre os golos das equipas; não considera
+      xG, onzes, lesões ou força individual dos adversários.
+      As probabilidades ainda não foram validadas retrospetivamente.
+    </p>
+  `;
+  }
+  
 function estimateMatch(home, away) {
   const hHome = teamStats(home, "home", 10);
   const aAway = teamStats(away, "away", 10);
@@ -572,6 +732,23 @@ async function loadGames() {
     $("team").innerHTML = teams.map(t =>
       `<option value="${esc(t)}">${esc(t)}</option>`
     ).join("");
+    
+const teamOptions = teams.map(t =>
+  `<option value="${esc(t)}">${esc(t)}</option>`
+).join("");
+
+$("bttsHome").innerHTML = teamOptions;
+$("bttsAway").innerHTML = teamOptions;
+
+// Escolhas iniciais diferentes, quando possível.
+if (teams.length > 1) {
+  $("bttsAway").selectedIndex = 1;
+}
+
+$("analyseBtts").disabled = teams.length < 2;
+$("bttsResult").innerHTML =
+  "<p>Seleciona as equipas e carrega em Analisar confronto.</p>";
+    
 
     $("status").textContent = `${matches.length} resultados carregados.`;
 
@@ -618,6 +795,28 @@ $("period").addEventListener("change", () => {
 
 $("fixtureFilter").addEventListener("change", renderFixtures);
 
+$("analyseBtts").addEventListener("click", renderBttsAnalysis);
+
+$("bttsHome").addEventListener("change", () => {
+  if ($("bttsHome").value === $("bttsAway").value) {
+    const options = [...$("bttsAway").options];
+    const alternative = options.find(
+      option => option.value !== $("bttsHome").value
+    );
+    if (alternative) $("bttsAway").value = alternative.value;
+  }
+});
+
+$("bttsAway").addEventListener("change", () => {
+  if ($("bttsAway").value === $("bttsHome").value) {
+    const options = [...$("bttsHome").options];
+    const alternative = options.find(
+      option => option.value !== $("bttsAway").value
+    );
+    if (alternative) $("bttsHome").value = alternative.value;
+  }
+});
+  
 loadGames();
 </script>
 </body>
