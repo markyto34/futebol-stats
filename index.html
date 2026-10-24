@@ -224,14 +224,15 @@ function normalizeMatch(row) {
     return null;
   }
 
-  return {
+    return {
     date,
     home,
     away,
     homeGoals,
     awayGoals,
     homeCorners,
-    awayCorners
+    awayCorners,
+    played: true
   };
 }
   
@@ -429,7 +430,6 @@ function estimateMatch(home, away) {
   };
 }
 
-function renderFixtures() {
   
   
 function renderFixtures() {
