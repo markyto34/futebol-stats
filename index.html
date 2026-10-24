@@ -3,149 +3,260 @@
 <html lang="pt-PT">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#101827">
   <title>Futebol Stats</title>
   <style>
-    * {
-      box-sizing: border-box;
-    }
-
+    * { box-sizing: border-box; }
     body {
       margin: 0;
-      font-family: Arial, sans-serif;
       background: #101827;
       color: #f1f5f9;
+      font-family: Arial, sans-serif;
     }
-
     header {
-      padding: 24px 18px;
       background: #172337;
-      border-bottom: 1px solid #29374c;
+      padding: 22px 16px;
+      border-bottom: 1px solid #344155;
     }
-
-    header h1 {
-      margin: 0;
-      font-size: 25px;
-    }
-
-    header p {
-      color: #9eafc5;
-      margin-bottom: 0;
-      font-size: 14px;
-    }
-
-    main {
-      max-width: 850px;
-      margin: auto;
-      padding: 20px 16px;
-    }
-
+    header h1 { margin: 0; font-size: 25px; }
+    header p { color: #aab8cb; font-size: 14px; }
+    main { max-width: 900px; margin: auto; padding: 16px; }
     .panel {
       background: #172337;
-      border: 1px solid #29374c;
-      border-radius: 14px;
-      padding: 18px;
+      border: 1px solid #344155;
+      border-radius: 12px;
+      padding: 16px;
       margin-bottom: 16px;
     }
-
-    .panel h2 {
-      margin-top: 0;
-      font-size: 18px;
-    }
-
-    .status {
-      display: inline-block;
-      padding: 6px 10px;
-      border-radius: 20px;
-      background: #253b35;
-      color: #8be0b0;
-      font-size: 12px;
-    }
-
-    .muted {
-      color: #9eafc5;
-      font-size: 14px;
-      line-height: 1.6;
-    }
-
+    .muted { color: #aab8cb; font-size: 14px; line-height: 1.5; }
     .stats {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 12px;
+      gap: 10px;
     }
-
-    .stat {
-      background: #101827;
-      border: 1px solid #29374c;
-      padding: 14px;
-      border-radius: 10px;
+    .stat { background: #101827; padding: 13px; border-radius: 9px; }
+    .stat strong { display: block; font-size: 23px; margin-bottom: 5px; }
+    .stat span { color: #aab8cb; font-size: 12px; }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td {
+      text-align: left;
+      padding: 11px 8px;
+      border-bottom: 1px solid #344155;
+      white-space: nowrap;
     }
-
-    .stat strong {
-      display: block;
-      font-size: 22px;
-      margin-bottom: 6px;
+    th { color: #aab8cb; }
+    button {
+      border: 0; border-radius: 8px; padding: 12px 16px;
+      background: #55d6a0; color: #10251e;
+      font-weight: bold; font-size: 14px;
     }
-
-    .stat span {
-      font-size: 13px;
-      color: #9eafc5;
-    }
-
-    footer {
-      text-align: center;
-      padding: 20px;
-      color: #8293a9;
-      font-size: 12px;
-    }
+    .status { font-size: 13px; color: #55d6a0; }
   </style>
 </head>
 <body>
   <header>
     <h1>⚽ Futebol Stats</h1>
-    <p>Estatísticas e análise de futebol</p>
+    <p>Análise estatística de futebol</p>
   </header>
 
   <main>
     <section class="panel">
-      <span class="status">Projeto iniciado</span>
-      <h2>Centro de análise</h2>
+      <h2>Primeira Liga portuguesa</h2>
       <p class="muted">
-        Consulta estatísticas, estuda o desempenho das equipas
-        e calcula médias de cantos, golos e cartões.
+        Dados históricos do Open Matchday. As estatísticas
+        dependem da disponibilidade de cada jogo.
       </p>
+      <button id="load">Carregar jogos</button>
+      <p id="status" class="status">Pronto para carregar os dados.</p>
     </section>
 
     <section class="panel">
-      <h2>As nossas estatísticas</h2>
+      <h2>Médias dos jogos com dados de cantos</h2>
       <div class="stats">
         <div class="stat">
-          <strong>—</strong>
-          <span>Média de cantos</span>
+          <strong id="games">—</strong>
+          <span>Jogos carregados</span>
         </div>
         <div class="stat">
-          <strong>—</strong>
-          <span>Média de golos</span>
+          <strong id="cornerGames">—</strong>
+          <span>Jogos com cantos registados</span>
         </div>
         <div class="stat">
-          <strong>—</strong>
-          <span>Média de cartões</span>
+          <strong id="corners">—</strong>
+          <span>Média de cantos totais</span>
         </div>
         <div class="stat">
-          <strong>—</strong>
-          <span>Jogos analisados</span>
+          <strong id="goals">—</strong>
+          <span>Média de golos totais</span>
         </div>
       </div>
-      <p class="muted">
-        As estatísticas serão preenchidas quando ligarmos
-        uma fonte de dados.
-      </p>
     </section>
 
-    <footer>
-      Futebol Stats · Projeto independente de análise estatística
+    <section class="panel">
+      <h2>Últimos resultados disponíveis</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>Casa</th>
+              <th>Resultado</th>
+              <th>Fora</th>
+              <th>Cantos</th>
+            </tr>
+          </thead>
+          <tbody id="matches">
+            <tr><td colspan="5">Ainda não foram carregados jogos.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <footer class="muted">
+      Fonte: <a href="https://github.com/oladeeayo/open-matchday"
+      style="color:#55d6a0">Open Matchday</a>.
+      Dados não fornecidos aparecem como indisponíveis.
     </footer>
   </main>
+
+  <script>
+    const csvUrl =
+      "https://cdn.jsdelivr.net/gh/oladeeayo/open-matchday@master/data/POR_1_primeira-liga/results_2627.csv";
+
+    const $ = id => document.getElementById(id);
+
+    // Lê campos CSV, incluindo valores entre aspas.
+    function parseCSV(text) {
+      const lines = text.trim().split(/\r?\n/);
+      if (lines.length < 2) return [];
+
+      function splitLine(line) {
+        const result = [];
+        let value = "";
+        let quoted = false;
+
+        for (let i = 0; i < line.length; i++) {
+          const c = line[i];
+
+          if (c === '"' && quoted && line[i + 1] === '"') {
+            value += '"';
+            i++;
+          } else if (c === '"') {
+            quoted = !quoted;
+          } else if (c === "," && !quoted) {
+            result.push(value);
+            value = "";
+          } else {
+            value += c;
+          }
+        }
+
+        result.push(value);
+        return result;
+      }
+
+      const headers = splitLine(lines[0]).map(h => h.trim());
+
+      return lines.slice(1)
+        .filter(line => line.trim())
+        .map(line => {
+          const values = splitLine(line);
+          const row = {};
+          headers.forEach((header, i) => {
+            row[header] = (values[i] ?? "").trim();
+          });
+          return row;
+        });
+    }
+
+    function numberOrNull(value) {
+      if (value === undefined || value === null || value === "") {
+        return null;
+      }
+      const n = Number(value);
+      return Number.isFinite(n) ? n : null;
+    }
+
+    function average(values) {
+      if (!values.length) return "—";
+      return (values.reduce((a, b) => a + b, 0) / values.length)
+        .toFixed(2);
+    }
+
+    async function loadMatches() {
+      $("load").disabled = true;
+      $("status").textContent = "A carregar os dados…";
+
+      try {
+        const response = await fetch(csvUrl);
+        if (!response.ok) throw new Error("HTTP " + response.status);
+
+        const text = await response.text();
+        const rows = parseCSV(text);
+
+        if (!rows.length) throw new Error("O CSV não contém jogos.");
+
+        const played = rows.filter(row =>
+          numberOrNull(row.ft_home) !== null &&
+          numberOrNull(row.ft_away) !== null
+        );
+
+        const withCorners = played.filter(row =>
+          numberOrNull(row.home_corners) !== null &&
+          numberOrNull(row.away_corners) !== null
+        );
+
+        const goalTotals = played.map(row =>
+          numberOrNull(row.ft_home) + numberOrNull(row.ft_away)
+        );
+
+        const cornerTotals = withCorners.map(row =>
+          numberOrNull(row.home_corners) +
+          numberOrNull(row.away_corners)
+        );
+
+        $("games").textContent = played.length;
+        $("cornerGames").textContent = withCorners.length;
+        $("corners").textContent = average(cornerTotals);
+        $("goals").textContent = average(goalTotals);
+
+        const recent = [...played].reverse().slice(0, 20);
+
+        $("matches").innerHTML = recent.map(row => {
+          const home = row.home || "—";
+          const away = row.away || "—";
+          const date = row.date || "—";
+          const score = `${row.ft_home}–${row.ft_away}`;
+
+          const hc = numberOrNull(row.home_corners);
+          const ac = numberOrNull(row.away_corners);
+          const corners = hc === null || ac === null
+            ? "—"
+            : `${hc}–${ac}`;
+
+          return `<tr>
+            <td>${date}</td>
+            <td>${home}</td>
+            <td>${score}</td>
+            <td>${away}</td>
+            <td>${corners}</td>
+          </tr>`;
+        }).join("");
+
+        $("status").textContent =
+          "Dados carregados. Fonte: Open Matchday.";
+      } catch (error) {
+        $("status").textContent =
+          "Não foi possível carregar os dados. Verifica a ligação e tenta novamente.";
+        console.error(error);
+      } finally {
+        $("load").disabled = false;
+      }
+    }
+
+    $("load").addEventListener("click", loadMatches);
+  </script>
 </body>
 </html>
