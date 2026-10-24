@@ -32,11 +32,11 @@ small{color:#9cabc2}
 a{color:#67e8a5}
 .matchlist{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;margin-top:12px}
 .matchcard h3{margin:0 0 12px}
-.teams{font-size:16px;font-weight:bold;margin:12px 0}
+.teams{font-size:16px;font-weight:bold;margin:12px 0;line-height:1.6}
 .predgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
-.pred{background:#0c1628;border-radius:8px;padding:10px}
+.pred{background:#0c1628;border-radius:8px;padding:10px;min-width:0}
 .pred span{display:block;font-size:12px;color:#aab7cc}
-.pred strong{display:block;font-size:18px;margin-top:5px;color:#67e8a5}
+.pred strong{display:block;font-size:18px;margin-top:5px;color:#67e8a5;overflow-wrap:anywhere}
 .pill{display:inline-block;padding:4px 8px;border-radius:20px;background:#24354b;color:#d7e3f6;font-size:11px;margin-bottom:8px}
 .warning{color:#f5cc77}
 section{margin-bottom:18px}
@@ -47,12 +47,10 @@ section{margin-bottom:18px}
   <h1>⚽ Futebol Stats</h1>
   <p>Estatísticas históricas, próximos jogos e estimativas de golos e cantos.</p>
 </header>
-
 <main>
 <section class="panel">
   <div class="controls">
-    <div>
-      <label for="league">Competição</label>
+    <div><label for="league">Competição</label>
       <select id="league">
         <option value="POR_1_primeira-liga">Portugal — Primeira Liga</option>
         <option value="ENG_1_premier-league">Inglaterra — Premier League</option>
@@ -69,8 +67,7 @@ section{margin-bottom:18px}
         <option value="USA_1_mls">Estados Unidos — MLS</option>
       </select>
     </div>
-    <div>
-      <label for="season">Época</label>
+    <div><label for="season">Época</label>
       <select id="season">
         <option value="2627">2026/27</option>
         <option value="2526">2025/26</option>
@@ -78,12 +75,10 @@ section{margin-bottom:18px}
         <option value="2324">2023/24</option>
       </select>
     </div>
-    <div>
-      <label for="team">Equipa</label>
+    <div><label for="team">Equipa</label>
       <select id="team"><option value="">Carrega os dados primeiro</option></select>
     </div>
-    <div>
-      <label for="period">Amostra</label>
+    <div><label for="period">Amostra</label>
       <select id="period">
         <option value="5">Últimos 5 jogos</option>
         <option value="10" selected>Últimos 10 jogos</option>
@@ -97,12 +92,11 @@ section{margin-bottom:18px}
 
 <section>
   <h2>Próximos jogos e previsões</h2>
-  <p>Estimativas calculadas com os resultados anteriores disponíveis para as duas equipas.</p>
+  <p>Estimativas calculadas a partir dos resultados anteriores disponíveis. Nem todas as competições têm calendários ou dados de cantos completos.</p>
   <div class="controls">
-    <div>
-      <label for="fixtureFilter">Filtrar jogos</label>
+    <div><label for="fixtureFilter">Filtrar jogos</label>
       <select id="fixtureFilter">
-        <option value="all">Todos os próximos jogos</option>
+        <option value="all">Todos os próximos jogos disponíveis</option>
         <option value="7">Próximos 7 dias</option>
         <option value="14">Próximos 14 dias</option>
         <option value="30">Próximos 30 dias</option>
@@ -120,389 +114,335 @@ section{margin-bottom:18px}
 
 <section>
   <h2>Desempenho em casa e fora</h2>
-  <div class="tablewrap">
-    <table>
-      <thead><tr><th>Local</th><th>Jogos</th><th>Cantos a favor</th><th>Cantos contra</th><th>Total cantos</th><th>Over 9,5</th></tr></thead>
-      <tbody id="venueStats"><tr><td colspan="6">Carrega os dados para começar.</td></tr></tbody>
-    </table>
-  </div>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Local</th><th>Jogos</th><th>Cantos a favor</th><th>Cantos contra</th><th>Total cantos</th><th>Over 9,5</th></tr></thead>
+    <tbody id="venueStats"><tr><td colspan="6">Carrega os dados para começar.</td></tr></tbody>
+  </table></div>
 </section>
 
 <section>
   <h2>Jogos recentes da equipa</h2>
-  <div class="tablewrap">
-    <table>
-      <thead><tr><th>Data</th><th>Casa</th><th>Resultado</th><th>Fora</th><th>Cantos</th><th>Total</th></tr></thead>
-      <tbody id="recent"><tr><td colspan="6">Sem dados carregados.</td></tr></tbody>
-    </table>
-  </div>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Data</th><th>Casa</th><th>Resultado</th><th>Fora</th><th>Cantos</th><th>Total</th></tr></thead>
+    <tbody id="recent"><tr><td colspan="6">Sem dados carregados.</td></tr></tbody>
+  </table></div>
 </section>
 
-<p><small>Fonte dos dados: <a href="https://github.com/oladeeayo/open-matchday" target="_blank" rel="noopener">open-matchday</a>. Dados gratuitos para utilização informativa não comercial, atualizados diariamente. As previsões são estimativas estatísticas e não garantem resultados. Valores em falta não são tratados como zero.</small></p>
+<p><small>Fonte: <a href="https://github.com/oladeeayo/open-matchday" target="_blank" rel="noopener">open-matchday</a>. Dados atualizados pela fonte, não em direto. As previsões são estimativas estatísticas, não garantias. Dados em falta são apresentados como N/D.</small></p>
 </main>
 
 <script>
+"use strict";
 const $ = id => document.getElementById(id);
-
 let matches = [];
 let fixturesData = [];
-let loadedLeague = "";
-let loadedSeason = "";
 
 function parseCSV(text) {
   const rows = [];
   let row = [], field = "", quoted = false;
-
   for (let i = 0; i < text.length; i++) {
     const c = text[i];
-
     if (quoted) {
-      if (c === '"' && text[i + 1] === '"') {
-        field += '"';
-        i++;
-      } else if (c === '"') {
-        quoted = false;
-      } else {
-        field += c;
-      }
+      if (c === '"' && text[i + 1] === '"') { field += '"'; i++; }
+      else if (c === '"') quoted = false;
+      else field += c;
     } else {
       if (c === '"') quoted = true;
-      else if (c === ',') {
-        row.push(field);
-        field = "";
-      } else if (c === '\n') {
-        row.push(field);
-        rows.push(row);
-        row = [];
-        field = "";
-      } else if (c !== '\r') {
-        field += c;
-      }
+      else if (c === ',') { row.push(field); field = ""; }
+      else if (c === '\n') { row.push(field); rows.push(row); row = []; field = ""; }
+      else if (c !== '\r') field += c;
     }
   }
-
-  if (field || row.length) {
-    row.push(field);
-    rows.push(row);
-  }
-
+  if (field || row.length) { row.push(field); rows.push(row); }
   if (!rows.length) return [];
-
-  const headers = rows.shift().map(x => x.trim());
-
+  const headers = rows.shift().map(x => x.trim().replace(/^\uFEFF/, ""));
   return rows.filter(r => r.length > 1).map(r => {
     const obj = {};
     headers.forEach((h, i) => obj[h] = (r[i] || "").trim());
     return obj;
   });
 }
-
-function num(v) {
-  if (v === undefined || v === null || String(v).trim() === "") return null;
-  const n = Number(v);
-  return Number.isFinite(n) ? n : null;
-}
-
-function avg(values) {
-  const valid = values.filter(v => v !== null && Number.isFinite(v));
-  return valid.length ? valid.reduce((a, b) => a + b, 0) / valid.length : null;
-}
-
-function fmt(v) {
-  return v === null || !Number.isFinite(v) ? "N/D" : v.toFixed(2);
-}
-
-function pct(n, d) {
-  return d ? (100 * n / d).toFixed(1) + "%" : "N/D";
-}
-
-function esc(v) {
-  return String(v ?? "").replace(/[&<>"']/g, c => ({
-    "&": "&amp;", "<": "&lt;", ">": "&gt;",
-    '"': "&quot;", "'": "&#39;"
+  
+function esc(value) {
+  return String(value ?? "").replace(/[&<>"']/g, c => ({
+    "&":"&amp;", "<":"&lt;", ">":"&gt;",
+    '"':"&quot;", "'":"&#39;"
   })[c]);
 }
 
-function dateValue(date) {
-  if (!date) return null;
-  const d = new Date(date + "T00:00:00");
+function getValue(obj, names) {
+  for (const name of names) {
+    if (obj[name] !== undefined && obj[name] !== "") return obj[name];
+  }
+  const keys = Object.keys(obj);
+  for (const name of names) {
+    const found = keys.find(k => k.toLowerCase() === name.toLowerCase());
+    if (found && obj[found] !== "") return obj[found];
+  }
+  return "";
+}
+
+function numberValue(value) {
+  if (value === null || value === undefined || value === "") return null;
+  const n = Number(String(value).replace(",", "."));
+  return Number.isFinite(n) ? n : null;
+}
+
+function normalizeMatch(row) {
+  const date = getValue(row, ["date", "Date", "match_date", "MatchDate"]);
+  const home = getValue(row, ["home", "Home", "home_team", "HomeTeam", "Home Team"]);
+  const away = getValue(row, ["away", "Away", "away_team", "AwayTeam", "Away Team"]);
+  const homeGoals = numberValue(getValue(row, ["home_score", "HomeScore", "home_goals", "FTHG", "homeGoals"]));
+  const awayGoals = numberValue(getValue(row, ["away_score", "AwayScore", "away_goals", "FTAG", "awayGoals"]));
+  const homeCorners = numberValue(getValue(row, ["home_corners", "HomeCorners", "HC", "home_corner"]));
+  const awayCorners = numberValue(getValue(row, ["away_corners", "AwayCorners", "AC", "away_corner"]));
+
+  return {
+    date, home, away, homeGoals, awayGoals, homeCorners, awayCorners,
+    played: homeGoals !== null && awayGoals !== null
+  };
+}
+
+function dateValue(value) {
+  if (!value) return null;
+  const d = new Date(value);
   return Number.isNaN(d.getTime()) ? null : d;
 }
 
-function teamMatches(team) {
-  return matches
-    .filter(m => m.home === team || m.away === team)
-    .sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+function average(values) {
+  const valid = values.filter(v => v !== null && v !== undefined && Number.isFinite(v));
+  if (!valid.length) return null;
+  return valid.reduce((sum, v) => sum + v, 0) / valid.length;
 }
 
-function statsFor(games, team) {
-  const rows = games.map(m => {
-    const home = m.home === team;
-    const gf = num(home ? m.ft_home : m.ft_away);
-    const ga = num(home ? m.ft_away : m.ft_home);
-    const cf = num(home ? m.home_corners : m.away_corners);
-    const ca = num(home ? m.away_corners : m.home_corners);
-    return {
-      m, home, gf, ga, cf, ca,
-      total: cf !== null && ca !== null ? cf + ca : null
-    };
+function fmt(value, digits = 1) {
+  return value === null || value === undefined || !Number.isFinite(value)
+    ? "N/D"
+    : value.toFixed(digits).replace(".", ",");
+}
+
+function percent(values, predicate) {
+  const valid = values.filter(v => v !== null && v !== undefined && Number.isFinite(v));
+  if (!valid.length) return null;
+  return 100 * valid.filter(predicate).length / valid.length;
+}
+
+function recentTeamGames(team, venue = "all", limit = 10) {
+  let list = matches.filter(m =>
+    m.played &&
+    (m.home === team || m.away === team) &&
+    (venue === "all" ||
+     (venue === "home" && m.home === team) ||
+     (venue === "away" && m.away === team))
+  );
+
+  list.sort((a, b) => {
+    const da = dateValue(a.date), db = dateValue(b.date);
+    return (db?.getTime() || 0) - (da?.getTime() || 0);
   });
 
-  const withCorners = rows.filter(r => r.total !== null);
-  const over = line => withCorners.filter(r => r.total > line).length;
-
-  return {
-    rows,
-    played: rows.length,
-    goals: avg(rows.map(r => r.gf)),
-    goalsAgainst: avg(rows.map(r => r.ga)),
-    gf: avg(rows.map(r => r.cf)),
-    ga: avg(rows.map(r => r.ca)),
-    total: avg(rows.map(r => r.total)),
-    overCounts: Object.fromEntries(
-      [8.5, 9.5, 10.5, 11.5, 12.5].map(l => [
-        l, { n: over(l), d: withCorners.length }
-      ])
-    ),
-    cornersN: withCorners.length
-  };
+  return limit === "all" ? list : list.slice(0, Number(limit));
 }
 
-function statCard(label, value, note = "") {
-  return `<div class="stat"><span>${esc(label)}</span><strong>${esc(value)}</strong><small>${esc(note)}</small></div>`;
-}
+function teamStats(team, venue = "all", limit = 10) {
+  const games = recentTeamGames(team, venue, limit);
 
-function render() {
-  const team = $("team").value;
-  if (!team || !matches.length) return;
+  const scored = [], conceded = [], cornersFor = [], cornersAgainst = [], totalCorners = [];
+  let over85 = 0, over95 = 0, over105 = 0, over115 = 0, over125 = 0;
+  let cornerGames = 0;
 
-  const all = teamMatches(team);
-  const p = $("period").value;
-  const games = p === "all" ? all : all.slice(0, Number(p));
-  const s = statsFor(games, team);
+  for (const m of games) {
+    const isHome = m.home === team;
+    scored.push(isHome ? m.homeGoals : m.awayGoals);
+    conceded.push(isHome ? m.awayGoals : m.homeGoals);
 
-  $("teamTitle").textContent =
-    team + " — " + (p === "all" ? "todos os jogos" : "últimos " + p + " jogos");
+    if (m.homeCorners !== null && m.awayCorners !== null) {
+      const own = isHome ? m.homeCorners : m.awayCorners;
+      const opp = isHome ? m.awayCorners : m.homeCorners;
+      const total = own + opp;
 
-  $("stats").innerHTML = [
-    statCard("Jogos analisados", s.played),
-    statCard("Média de golos marcados", fmt(s.goals)),
-    statCard("Média de golos sofridos", fmt(s.goalsAgainst)),
-    statCard("Cantos a favor / jogo", fmt(s.gf), "Dados em " + s.cornersN + " jogos"),
-    statCard("Cantos contra / jogo", fmt(s.ga)),
-    statCard("Média total de cantos", fmt(s.total)),
-    ...[8.5, 9.5, 10.5, 11.5, 12.5].map(l =>
-      statCard(
-        "Over " + l + " cantos",
-        pct(s.overCounts[l].n, s.overCounts[l].d),
-        s.overCounts[l].n + " de " + s.overCounts[l].d + " jogos com dados"
-      )
-    )
-  ].join("");
+      cornersFor.push(own);
+      cornersAgainst.push(opp);
+      totalCorners.push(total);
+      cornerGames++;
 
-  const venues = [
-    ["Casa", all.filter(m => m.home === team)],
-    ["Fora", all.filter(m => m.away === team)]
-  ];
-
-  $("venueStats").innerHTML = venues.map(([label, arr]) => {
-    const v = statsFor(arr, team);
-    const n = v.overCounts[9.5];
-    return `<tr>
-      <td>${esc(label)}</td><td>${v.played}</td>
-      <td>${fmt(v.gf)}</td><td>${fmt(v.ga)}</td>
-      <td>${fmt(v.total)}</td><td>${pct(n.n, n.d)}</td>
-    </tr>`;
-  }).join("");
-
-  $("recent").innerHTML = games.slice(0, 20).map(m => {
-    const hc = num(m.home_corners);
-    const ac = num(m.away_corners);
-    const total = hc !== null && ac !== null ? hc + ac : null;
-
-    return `<tr>
-      <td>${esc(m.date || "—")}</td>
-      <td>${esc(m.home)}</td>
-      <td>${esc(m.ft_home ?? "—")} - ${esc(m.ft_away ?? "—")}</td>
-      <td>${esc(m.away)}</td>
-      <td>${hc === null || ac === null ? "N/D" : hc + " - " + ac}</td>
-      <td>${total === null ? "N/D" : total}</td>
-    </tr>`;
-  }).join("") || '<tr><td colspan="6">Não existem jogos para mostrar.</td></tr>';
-}
-
-/* Calcula uma estimativa usando o desempenho da equipa no local
-   relevante e o desempenho defensivo do adversário nesse local. */
-function venueValues(team, venue, fieldFor, fieldAgainst) {
-  const games = teamMatches(team).filter(m =>
-    venue === "home" ? m.home === team : m.away === team
-  );
-
-  const recent = games.slice(0, 10);
-  const source = recent.length >= 3 ? recent : games;
-
-  return {
-    attack: avg(source.map(m => num(fieldFor(m)))),
-    against: avg(source.map(m => num(fieldAgainst(m)))),
-    n: source.length
-  };
-}
-
-function estimateMatch(f) {
-  const home = f.home;
-  const away = f.away;
-
-  const homeGoals = venueValues(
-    home, "home",
-    m => m.ft_home,
-    m => m.ft_away
-  );
-  const awayGoals = venueValues(
-    away, "away",
-    m => m.ft_away,
-    m => m.ft_home
-  );
-
-  const homeCorners = venueValues(
-    home, "home",
-    m => m.home_corners,
-    m => m.away_corners
-  );
-  const awayCorners = venueValues(
-    away, "away",
-    m => m.away_corners,
-    m => m.home_corners
-  );
-
-  const expectedHomeGoals = avg([homeGoals.attack, awayGoals.against]);
-  const expectedAwayGoals = avg([awayGoals.attack, homeGoals.against]);
-
-  const expectedHomeCorners = avg([homeCorners.attack, awayCorners.against]);
-  const expectedAwayCorners = avg([awayCorners.attack, homeCorners.against]);
-
-  const expectedTotalCorners =
-    expectedHomeCorners !== null && expectedAwayCorners !== null
-      ? expectedHomeCorners + expectedAwayCorners
-      : null;
-
-  const relevantGames = [
-    ...teamMatches(home).filter(m => m.home === home).slice(0, 10),
-    ...teamMatches(away).filter(m => m.away === away).slice(0, 10)
-  ];
-
-  const totals = relevantGames
-    .map(m => {
-      const h = num(m.home_corners);
-      const a = num(m.away_corners);
-      return h !== null && a !== null ? h + a : null;
-    })
-    .filter(v => v !== null);
-
-  const overs = {};
-  for (const line of [8.5, 9.5, 10.5, 11.5, 12.5]) {
-    const n = totals.filter(t => t > line).length;
-    overs[line] = { n, d: totals.length, rate: totals.length ? n / totals.length : null };
+      if (total > 8.5) over85++;
+      if (total > 9.5) over95++;
+      if (total > 10.5) over105++;
+      if (total > 11.5) over115++;
+      if (total > 12.5) over125++;
+    }
   }
 
   return {
-    expectedHomeGoals,
-    expectedAwayGoals,
-    expectedTotalGoals:
-      expectedHomeGoals !== null && expectedAwayGoals !== null
-        ? expectedHomeGoals + expectedAwayGoals : null,
-    expectedHomeCorners,
-    expectedAwayCorners,
-    expectedTotalCorners,
-    overs,
-    sample: totals.length,
-    homeSample: homeGoals.n,
-    awaySample: awayGoals.n
+    games: games.length,
+    goalsFor: average(scored),
+    goalsAgainst: average(conceded),
+    cornersFor: average(cornersFor),
+    cornersAgainst: average(cornersAgainst),
+    totalCorners: average(totalCorners),
+    over85: cornerGames ? 100 * over85 / cornerGames : null,
+    over95: cornerGames ? 100 * over95 / cornerGames : null,
+    over105: cornerGames ? 100 * over105 / cornerGames : null,
+    over115: cornerGames ? 100 * over115 / cornerGames : null,
+    over125: cornerGames ? 100 * over125 / cornerGames : null,
+    cornerGames
   };
 }
 
+function renderStats(team) {
+  const period = $("period").value;
+  const all = teamStats(team, "all", period);
+  const home = teamStats(team, "home", period);
+  const away = teamStats(team, "away", period);
+
+  $("teamTitle").textContent = "Estatísticas — " + team;
+
+  const cards = [
+    ["Jogos analisados", all.games],
+    ["Golos marcados / jogo", fmt(all.goalsFor)],
+    ["Golos sofridos / jogo", fmt(all.goalsAgainst)],
+    ["Cantos a favor / jogo", fmt(all.cornersFor)],
+    ["Cantos contra / jogo", fmt(all.cornersAgainst)],
+    ["Média total de cantos", fmt(all.totalCorners)],
+    ["Over 8,5 cantos", fmt(all.over85, 1) + (all.over85 === null ? "" : "%")],
+    ["Over 9,5 cantos", fmt(all.over95, 1) + (all.over95 === null ? "" : "%")],
+    ["Over 10,5 cantos", fmt(all.over105, 1) + (all.over105 === null ? "" : "%")],
+    ["Over 11,5 cantos", fmt(all.over115, 1) + (all.over115 === null ? "" : "%")],
+    ["Over 12,5 cantos", fmt(all.over125, 1) + (all.over125 === null ? "" : "%")]
+  ];
+
+  $("stats").innerHTML = cards.map(([label, value]) =>
+    `<div class="stat"><span>${esc(label)}</span><strong>${esc(value)}</strong></div>`
+  ).join("");
+
+  $("venueStats").innerHTML = [
+    ["Casa", home],
+    ["Fora", away],
+    ["Total", all]
+  ].map(([label, s]) =>
+    `<tr>
+      <td>${esc(label)}</td>
+      <td>${s.games}</td>
+      <td>${fmt(s.cornersFor)}</td>
+      <td>${fmt(s.cornersAgainst)}</td>
+      <td>${fmt(s.totalCorners)}</td>
+      <td>${s.over95 === null ? "N/D" : fmt(s.over95) + "%"}</td>
+    </tr>`
+  ).join("");
+
+  const recent = recentTeamGames(team, "all", period);
+  $("recent").innerHTML = recent.length ? recent.map(m => {
+    const total = m.homeCorners !== null && m.awayCorners !== null
+      ? m.homeCorners + m.awayCorners : null;
+    return `<tr>
+      <td>${esc(m.date || "N/D")}</td>
+      <td>${esc(m.home)}</td>
+      <td>${m.homeGoals} - ${m.awayGoals}</td>
+      <td>${esc(m.away)}</td>
+      <td>${m.homeCorners === null || m.awayCorners === null
+        ? "N/D" : m.homeCorners + " - " + m.awayCorners}</td>
+      <td>${total === null ? "N/D" : total}</td>
+    </tr>`;
+  }).join("") : `<tr><td colspan="6">Não existem jogos para esta equipa.</td></tr>`;
+}
+
+function estimateMatch(home, away) {
+  const hHome = teamStats(home, "home", 10);
+  const aAway = teamStats(away, "away", 10);
+
+  const hAll = teamStats(home, "all", 10);
+  const aAll = teamStats(away, "all", 10);
+
+  const homeGoals = average([hHome.goalsFor, aAway.goalsAgainst]);
+  const awayGoals = average([aAway.goalsFor, hHome.goalsAgainst]);
+
+  const homeCorners = average([hHome.cornersFor, aAway.cornersAgainst]);
+  const awayCorners = average([aAway.cornersFor, hHome.cornersAgainst]);
+
+  const pooledOver = [];
+  const homeGames = recentTeamGames(home, "home", 10);
+  const awayGames = recentTeamGames(away, "away", 10);
+
+  for (const m of [...homeGames, ...awayGames]) {
+    if (m.homeCorners !== null && m.awayCorners !== null) {
+      pooledOver.push(m.homeCorners + m.awayCorners);
+    }
+  }
+
+  const over95 = percent(pooledOver, n => n > 9.5);
+  const over105 = percent(pooledOver, n => n > 10.5);
+  const over115 = percent(pooledOver, n => n > 11.5);
+
+  return {
+    homeGoals,
+    awayGoals,
+    totalGoals: homeGoals !== null && awayGoals !== null ? homeGoals + awayGoals : null,
+    homeCorners,
+    awayCorners,
+    totalCorners: homeCorners !== null && awayCorners !== null
+      ? homeCorners + awayCorners : null,
+    over95,
+    over105,
+    over115,
+    cornerSample: pooledOver.length
+  };
+  }
+  
 function renderFixtures() {
   const container = $("fixtures");
+  const status = $("fixtureStatus");
+  const filter = $("fixtureFilter").value;
 
   if (!fixturesData.length) {
     container.innerHTML = "";
+    status.textContent = "Não foram encontrados jogos futuros neste ficheiro de calendário.";
     return;
   }
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
 
-  const filter = $("fixtureFilter").value;
-  const end = new Date(today);
-
-  if (filter !== "all") end.setDate(end.getDate() + Number(filter));
-
-  const upcoming = fixturesData.filter(f => {
-    const d = dateValue(f.date);
-    return d && d >= today && (filter === "all" || d <= end);
+  let list = fixturesData.filter(m => {
+    const d = dateValue(m.date);
+    if (!d) return true;
+    if (d < now) return false;
+    if (filter === "all") return true;
+    const days = Number(filter);
+    const limit = new Date(now);
+    limit.setDate(limit.getDate() + days);
+    return d <= limit;
   });
 
-  if (!upcoming.length) {
-    container.innerHTML =
-      '<div class="panel">Não foram encontrados jogos futuros neste período.</div>';
-    $("fixtureStatus").textContent =
-      "A fonte não apresenta jogos futuros neste período.";
+  list.sort((a, b) => {
+    const da = dateValue(a.date), db = dateValue(b.date);
+    return (da?.getTime() || 0) - (db?.getTime() || 0);
+  });
+
+  if (!list.length) {
+    container.innerHTML = "";
+    status.textContent = "Não há jogos futuros dentro do período selecionado.";
     return;
   }
 
-  $("fixtureStatus").textContent =
-    upcoming.length + " jogos futuros encontrados.";
+  status.textContent = `${list.length} jogo(s) encontrado(s). As estimativas dependem dos dados históricos disponíveis.`;
 
-  container.innerHTML = upcoming.map(f => {
-    const p = estimateMatch(f);
-    const date = f.date || "Data desconhecida";
-    const time = f.time ? " · " + f.time : "";
-    const round = f.gw ? "Jornada " + f.gw : "Jornada não indicada";
-
-    const goalsText = p.expectedTotalGoals === null
-      ? "Dados de golos insuficientes"
-      : "Total estimado: " + fmt(p.expectedTotalGoals) + " golos";
-
-    const cornersText = p.expectedTotalCorners === null
-      ? "Dados de cantos insuficientes"
-      : "Total estimado: " + fmt(p.expectedTotalCorners) + " cantos";
-
-    const lines = [8.5, 9.5, 10.5, 11.5, 12.5].map(line => {
-      const o = p.overs[line];
-      return `<div class="pred">
-        <span>Histórico Over ${line}</span>
-        <strong>${o.d ? pct(o.n, o.d) : "N/D"}</strong>
-        <small>${o.n} de ${o.d} jogos</small>
-      </div>`;
-    }).join("");
+  container.innerHTML = list.map(m => {
+    const p = estimateMatch(m.home, m.away);
+    const date = m.date ? esc(m.date) : "Data por confirmar";
 
     return `<article class="matchcard">
-      <span class="pill">${esc(round)}</span>
-      <div class="muted">${esc(date + time)}</div>
-      <div class="teams">${esc(f.home)}<br>vs<br>${esc(f.away)}</div>
-      <h3>Estimativa estatística</h3>
+      <span class="pill">${date}</span>
+      <div class="teams">${esc(m.home)}<br>vs.<br>${esc(m.away)}</div>
       <div class="predgrid">
-        <div class="pred">
-          <span>Golos — casa</span>
-          <strong>${fmt(p.expectedHomeGoals)}</strong>
-        </div>
-        <div class="pred">
-          <span>Golos — fora</span>
-          <strong>${fmt(p.expectedAwayGoals)}</strong>
-        </div>
-        <div class="pred">
-          <span>Cantos — casa</span>
-          <strong>${fmt(p.expectedHomeCorners)}</strong>
-        </div>
-        <div class="pred">
-          <span>Cantos — fora</span>
-          <strong>${fmt(p.expectedAwayCorners)}</strong>
-        </div>
+        <div class="pred"><span>Golos — casa</span><strong>${fmt(p.homeGoals)}</strong></div>
+        <div class="pred"><span>Golos — fora</span><strong>${fmt(p.awayGoals)}</strong></div>
+        <div class="pred"><span>Total estimado de golos</span><strong>${fmt(p.totalGoals)}</strong></div>
+        <div class="pred"><span>Total estimado de cantos</span><strong>${fmt(p.totalCorners)}</strong></div>
+        <div class="pred"><span>Over 9,5 cantos — histórico</span><strong>${p.over95 === null ? "N/D" : fmt(p.over95) + "%"}</strong></div>
+        <div class="pred"><span>Over 10,5 cantos — histórico</span><strong>${p.over105 === null ? "N/D" : fmt(p.over105) + "%"}</strong></div>
       </div>
-      <p>${esc(goalsText)}</p>
-      <p>${esc(cornersText)}</p>
-      <h3>Frequência histórica de cantos</h3>
-      <div class="predgrid">${lines}</div>
-      <p class="muted">Amostra: ${p.sample} jogos com cantos disponíveis. Os jogos das duas equipas podem sobrepor-se. Estimativas baseadas no desempenho em casa/fora; não incluem onzes, lesões, odds ou contexto tático.</p>
+      <p class="muted">Amostra histórica de cantos: ${p.cornerSample} registos. Não é uma probabilidade calibrada para este jogo.</p>
     </article>`;
   }).join("");
 }
@@ -510,100 +450,92 @@ function renderFixtures() {
 async function loadGames() {
   const league = $("league").value;
   const season = $("season").value;
+  const button = $("load");
 
-  $("load").disabled = true;
-  $("status").textContent = "A carregar resultados históricos…";
+  button.disabled = true;
+  $("status").textContent = "A carregar resultados históricos...";
+  $("fixtureStatus").textContent = "A procurar o calendário de jogos...";
   $("fixtures").innerHTML = "";
-  $("fixtureStatus").textContent = "A carregar calendário…";
+  $("stats").innerHTML = "";
+  $("recent").innerHTML = "";
+  $("venueStats").innerHTML = "";
   matches = [];
   fixturesData = [];
 
+  const base = `https://raw.githubusercontent.com/oladeeayo/open-matchday/master/data/${league}/`;
+
   try {
-    const base = "https://raw.githubusercontent.com/oladeeayo/open-matchday/master/data/";
-    const resultUrl = `${base}${league}/results_${season}.csv`;
-    const fixtureUrl = `${base}${league}/fixtures_${season}.csv`;
+    const response = await fetch(`${base}results_${season}.csv`);
 
-    const resultResponse = await fetch(resultUrl);
-
-    if (!resultResponse.ok) {
-      throw new Error("Não foi possível carregar os resultados históricos (HTTP " + resultResponse.status + ").");
+    if (!response.ok) {
+      throw new Error(`Não foi possível obter os resultados (HTTP ${response.status}).`);
     }
 
-    const resultText = await resultResponse.text();
-
-    if (!resultText.includes("home,") || resultText.startsWith("<!DOCTYPE")) {
-      throw new Error("A fonte não devolveu um CSV de resultados válido.");
-    }
-
-    const resultData = parseCSV(resultText);
-
-    matches = resultData.filter(m =>
-      num(m.ft_home) !== null && num(m.ft_away) !== null
-    );
+    const csv = await response.text();
+    matches = parseCSV(csv).map(normalizeMatch).filter(m => m.home && m.away && m.played);
 
     if (!matches.length) {
-      $("status").textContent = "Ainda não existem resultados disponíveis para esta época.";
-    } else {
-      const teams = [...new Set(
-        matches.flatMap(m => [m.home, m.away]).filter(Boolean)
-      )].sort((a, b) => a.localeCompare(b));
-
-      const previousTeam = $("team").value;
-
-      $("team").innerHTML = teams.map(t =>
-        `<option value="${esc(t)}">${esc(t)}</option>`
-      ).join("");
-
-      if (teams.includes(previousTeam)) $("team").value = previousTeam;
-
-      $("status").textContent =
-        `${matches.length} jogos históricos carregados. ${teams.length} equipas encontradas.`;
-
-      loadedLeague = league;
-      loadedSeason = season;
-      render();
+      throw new Error("O ficheiro foi carregado, mas não foram reconhecidos resultados. O formato dos dados pode ter mudado.");
     }
 
+    const teams = [...new Set(matches.flatMap(m => [m.home, m.away]))].sort((a, b) => a.localeCompare(b));
+
+    $("team").innerHTML = teams.map(t =>
+      `<option value="${esc(t)}">${esc(t)}</option>`
+    ).join("");
+
+    $("status").textContent = `${matches.length} resultados carregados. A preparar as estatísticas...`;
+
+    // Tenta carregar o calendário de jogos futuros.
     try {
-      const fixtureResponse = await fetch(fixtureUrl);
+      const fixtureResponse = await fetch(`${base}fixtures_${season}.csv`);
 
-      if (!fixtureResponse.ok) {
-        throw new Error("O calendário não está disponível para esta competição/época.");
+      if (fixtureResponse.ok) {
+        const fixtureCSV = await fixtureResponse.text();
+        fixturesData = parseCSV(fixtureCSV)
+          .map(normalizeMatch)
+          .filter(m => m.home && m.away && !m.played);
       }
-
-      const fixtureText = await fixtureResponse.text();
-
-      if (!fixtureText.includes("home,") || fixtureText.startsWith("<!DOCTYPE")) {
-        throw new Error("O ficheiro de calendário não é válido.");
-      }
-
-      fixturesData = parseCSV(fixtureText)
-        .filter(f => f.home && f.away && f.date);
-
-      renderFixtures();
-    } catch (fixtureError) {
-      $("fixtures").innerHTML =
-        `<div class="panel warning">${esc(fixtureError.message)}</div>`;
-      $("fixtureStatus").textContent = "Não foi possível carregar os próximos jogos.";
+    } catch (error) {
+      console.warn("Calendário indisponível:", error);
     }
 
-  } catch (err) {
-    $("status").textContent = "Erro: " + err.message;
+    renderStats($("team").value);
+    renderFixtures();
+
+    $("status").textContent =
+      `${matches.length} resultados históricos carregados para ${league}.`;
+  } catch (error) {
+    console.error(error);
+    $("status").textContent = `Erro: ${error.message}`;
+    $("fixtureStatus").textContent = "Não foi possível carregar os dados.";
     $("stats").innerHTML = "";
-    $("venueStats").innerHTML = "";
-    $("recent").innerHTML = "";
     $("fixtures").innerHTML = "";
-    $("fixtureStatus").textContent = "Calendário não carregado.";
   } finally {
-    $("load").disabled = false;
+    button.disabled = false;
   }
 }
 
 $("load").addEventListener("click", loadGames);
-$("team").addEventListener("change", render);
-$("period").addEventListener("change", render);
+
+$("team").addEventListener("change", () => {
+  if ($("team").value && matches.length) {
+    renderStats($("team").value);
+  }
+});
+
+$("period").addEventListener("change", () => {
+  if ($("team").value && matches.length) {
+    renderStats($("team").value);
+  }
+});
+
 $("fixtureFilter").addEventListener("change", renderFixtures);
 
-$("league").addEventListener("change", () => {
-  $("status").textContent = "Carrega os dados da nova competição.";
+// Carrega automaticamente a competição selecionada.
+loadGames();
+</script>
+</body>
+</html>
+
   
