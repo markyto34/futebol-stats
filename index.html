@@ -188,14 +188,53 @@ function numberValue(value) {
   return Number.isFinite(n) ? n : null;
 }
 
+
 function normalizeMatch(row) {
-  const date = getValue(row, ["date", "Date", "match_date", "MatchDate"]);
-  const home = getValue(row, ["home", "Home", "home_team", "HomeTeam", "Home Team"]);
-  const away = getValue(row, ["away", "Away", "away_team", "AwayTeam", "Away Team"]);
-  const homeGoals = numberValue(getValue(row, ["home_score", "HomeScore", "home_goals", "FTHG", "homeGoals"]));
-  const awayGoals = numberValue(getValue(row, ["away_score", "AwayScore", "away_goals", "FTAG", "awayGoals"]));
-  const homeCorners = numberValue(getValue(row, ["home_corners", "HomeCorners", "HC", "home_corner"]));
-  const awayCorners = numberValue(getValue(row, ["away_corners", "AwayCorners", "AC", "away_corner"]));
+  const date = getValue(row, [
+    "date", "Date", "match_date", "MatchDate"
+  ]);
+
+  const home = getValue(row, [
+    "home", "Home", "home_team", "HomeTeam", "Home Team"
+  ]);
+
+  const away = getValue(row, [
+    "away", "Away", "away_team", "AwayTeam", "Away Team"
+  ]);
+
+  const homeGoals = numberValue(getValue(row, [
+    "ft_home", "FT_HOME", "home_score", "HomeScore",
+    "home_goals", "FTHG", "homeGoals"
+  ]));
+
+  const awayGoals = numberValue(getValue(row, [
+    "ft_away", "FT_AWAY", "away_score", "AwayScore",
+    "away_goals", "FTAG", "awayGoals"
+  ]));
+
+  const homeCorners = numberValue(getValue(row, [
+    "home_corners", "HomeCorners", "HC", "home_corner"
+  ]));
+
+  const awayCorners = numberValue(getValue(row, [
+    "away_corners", "AwayCorners", "AC", "away_corner"
+  ]));
+
+  if (!home || !away || homeGoals === null || awayGoals === null) {
+    return null;
+  }
+
+  return {
+    date,
+    home,
+    away,
+    homeGoals,
+    awayGoals,
+    homeCorners,
+    awayCorners
+  };
+}
+  
 
   return {
     date, home, away, homeGoals, awayGoals, homeCorners, awayCorners,
