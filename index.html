@@ -1,96 +1,72 @@
 
 <!DOCTYPE html>
-<html lang="pt-PT">
+<html lang="pt">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Futebol Stats</title>
 <style>
-:root {
-  color-scheme: dark;
-  --bg: #0b1220;
-  --panel: #121c2e;
-  --panel2: #17243a;
-  --line: #2b3a52;
-  --text: #edf3fb;
-  --muted: #9fb0c7;
-  --accent: #55d6a2;
-  --blue: #76a9ff;
-  --danger: #ff9292;
-}
-* { box-sizing: border-box; }
-body {
-  margin: 0;
-  background: var(--bg);
-  color: var(--text);
-  font: 15px/1.5 system-ui, Arial, sans-serif;
-}
-header {
-  text-align: center;
-  padding: 25px 14px;
-  border-bottom: 1px solid var(--line);
-}
-h1 { margin: 0 0 5px; font-size: clamp(26px,5vw,38px); }
-header p { margin: 0; color: var(--muted); }
-main { max-width: 1180px; margin: auto; padding: 16px 12px 35px; }
-.panel {
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: 14px;
-  padding: 15px;
-  margin-bottom: 15px;
-}
-.controls, .grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit,minmax(160px,1fr));
-  gap: 11px;
-  align-items: end;
-}
-label { display:block; color:var(--muted); font-size:13px; margin-bottom:5px; }
-select, button {
-  width: 100%; padding: 11px; border-radius: 9px;
-  border: 1px solid var(--line); background: var(--panel2);
-  color: var(--text); font: inherit; min-height: 44px;
-}
-button { background: var(--accent); color: #062016; font-weight: 800; border: 0; cursor: pointer; }
-button:disabled { opacity: .6; }
-.status { margin-top: 12px; color: var(--muted); overflow-wrap: anywhere; }
-.error { color: var(--danger); }
-.success { color: var(--accent); }
-h2 { font-size: 20px; margin: 0 0 12px; }
-.metric { background: var(--panel2); padding: 12px; border: 1px solid var(--line); border-radius: 10px; }
-.ml { font-size: 12px; color: var(--muted); }
-.mv { font-size: 24px; font-weight: 800; }
-.ms, .muted { font-size: 12px; color: var(--muted); }
-.tablewrap { overflow: auto; border: 1px solid var(--line); border-radius: 9px; }
-table { border-collapse: collapse; width: 100%; min-width: 620px; }
-th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
-th { background: #1a2940; color: #cdd9ea; font-size: 12px; }
-tr:last-child td { border-bottom: 0; }
-.two { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,400px),1fr)); gap: 15px; }
-a { color: var(--blue); }
-footer { text-align: center; color: var(--muted); font-size: 12px; padding: 0 12px 24px; }
-@media(max-width:500px) {
-  .panel { padding: 12px; }
-  main { padding: 10px; }
-}
+:root{color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:#0b1120;color:#e8edf7;font-family:Arial,sans-serif}
+header{padding:22px 16px;background:#111c30;border-bottom:1px solid #26344d}
+h1{margin:0;color:#67e8a5}
+h2{font-size:19px;margin-top:25px}
+h3{font-size:16px;color:#67e8a5}
+p,.muted{color:#aab7cc;font-size:13px;line-height:1.5}
+main{max-width:1100px;margin:auto;padding:16px}
+.panel,.stat,.matchcard{background:#131e31;border:1px solid #283650;border-radius:12px;padding:14px}
+.controls,.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:12px}
+label{display:block;font-size:12px;color:#aab7cc;margin-bottom:7px}
+select,button{width:100%;padding:12px;border-radius:8px;border:1px solid #3a4b66;background:#0c1628;color:white;font-size:14px}
+button{background:#147d52;border:0;font-weight:bold;cursor:pointer}
+button:disabled{opacity:.5}
+.stat strong{display:block;font-size:23px;margin-top:8px;color:#67e8a5;overflow-wrap:anywhere}
+.stat span{font-size:12px;color:#aab7cc}
+.tablewrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{text-align:left;padding:10px 8px;border-bottom:1px solid #29364b;white-space:nowrap}
+th{color:#67e8a5}
+#status,#fixtureStatus{margin:14px 0;color:#f5cc77}
+section{margin-bottom:20px}
+.matchlist{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:12px}
+.matchcard h3{margin-top:0}
+.teams{font-size:16px;font-weight:bold;line-height:1.7;margin:12px 0}
+.predgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.pred{background:#0c1628;border-radius:8px;padding:10px;min-width:0}
+.pred span{display:block;font-size:12px;color:#aab7cc}
+.pred strong{display:block;font-size:18px;margin-top:5px;color:#67e8a5;overflow-wrap:anywhere}
+.pill{display:inline-block;padding:4px 8px;border-radius:20px;background:#24354b;font-size:11px}
+small{color:#9cabc2}
+a{color:#67e8a5}
 </style>
 </head>
 <body>
 <header>
   <h1>⚽ Futebol Stats</h1>
-  <p>Resultados históricos, forma das equipas, cantos e estimativas para próximos jogos.</p>
+  <p>Estatísticas de golos, cantos, linhas Over e estimativas para próximos jogos.</p>
 </header>
-
 <main>
 <section class="panel">
   <div class="controls">
-    <div>
-      <label for="league">Competição</label>
-      <select id="league"></select>
+    <div><label for="league">Competição</label>
+      <select id="league">
+        <option value="POR_1_primeira-liga">Portugal — Primeira Liga</option>
+        <option value="ENG_1_premier-league">Inglaterra — Premier League</option>
+        <option value="ESP_1_la-liga">Espanha — La Liga</option>
+        <option value="ITA_1_serie-a">Itália — Serie A</option>
+        <option value="GER_1_bundesliga">Alemanha — Bundesliga</option>
+        <option value="FRA_1_ligue-1">França — Ligue 1</option>
+        <option value="NED_1_eredivisie">Países Baixos — Eredivisie</option>
+        <option value="BRA_1_serie-a">Brasil — Brasileirão</option>
+        <option value="UEFA_1_champions-league">Liga dos Campeões</option>
+        <option value="BEL_1_pro-league">Bélgica — Pro League</option>
+        <option value="TUR_1_super-lig">Turquia — Süper Lig</option>
+        <option value="ENG_2_championship">Inglaterra — Championship</option>
+        <option value="USA_1_mls">Estados Unidos — MLS</option>
+      </select>
     </div>
-    <div>
-      <label for="season">Época</label>
+    <div><label for="season">Época</label>
       <select id="season">
         <option value="2627">2026/27</option>
         <option value="2526">2025/26</option>
@@ -98,428 +74,502 @@ footer { text-align: center; color: var(--muted); font-size: 12px; padding: 0 12
         <option value="2324">2023/24</option>
       </select>
     </div>
-    <div><button id="loadBtn">Carregar dados</button></div>
+    <div><label for="team">Equipa</label>
+      <select id="team"><option value="">Carrega os dados primeiro</option></select>
+    </div>
+    <div><label for="period">Amostra estatística</label>
+      <select id="period">
+        <option value="5">Últimos 5 jogos</option>
+        <option value="10" selected>Últimos 10 jogos</option>
+        <option value="all">Todos os jogos</option>
+      </select>
+    </div>
   </div>
-  <div id="status" class="status">A carregar dados…</div>
+  <p><button id="load">Carregar dados da competição</button></p>
+  <div id="status" role="status">Seleciona a competição e carrega os dados.</div>
 </section>
 
-<section class="panel">
-  <h2>Resumo da competição</h2>
-  <div id="summary" class="grid">
-    <p class="muted">A aguardar dados.</p>
+<section>
+  <h2>Próximos jogos e estimativas</h2>
+  <div class="controls">
+    <div><label for="fixtureFilter">Período</label>
+      <select id="fixtureFilter">
+        <option value="all">Todos os jogos disponíveis</option>
+        <option value="7">Próximos 7 dias</option>
+        <option value="14">Próximos 14 dias</option>
+        <option value="30">Próximos 30 dias</option>
+      </select>
+    </div>
   </div>
+  <div id="fixtureStatus" role="status">Carrega os dados para procurar jogos.</div>
+  <div id="fixtures" class="matchlist"></div>
 </section>
 
-<section class="panel">
-  <h2>Estatísticas por equipa</h2>
-  <p class="muted">
-    Os cantos só são calculados quando a fonte disponibiliza os valores.
-    Dados em falta não são tratados como zero.
-  </p>
-  <div class="tablewrap"><table id="teamTable"></table></div>
+<section>
+  <h2 id="teamTitle">Estatísticas da equipa</h2>
+  <div class="stats" id="stats"></div>
 </section>
 
-<div class="two">
-  <section class="panel">
-    <h2>Últimos resultados</h2>
-    <div class="tablewrap"><table id="recentTable"></table></div>
-  </section>
-  <section class="panel">
-    <h2>Próximos jogos e estimativas</h2>
-    <p class="muted">Estimativas simples baseadas nos resultados desta época; não são odds nem garantias.</p>
-    <div class="tablewrap"><table id="fixtureTable"></table></div>
-  </section>
-</div>
-
-<section class="panel">
-  <h2>Notas</h2>
-  <ul>
-    <li>Over de cantos é a percentagem histórica de jogos acima da linha indicada.</li>
-    <li>As amostras podem variar entre competições e épocas.</li>
-    <li>A fonte não fornece necessariamente dados em direto.</li>
-    <li>Fonte: <a href="https://github.com/oladeeayo/open-matchday" target="_blank" rel="noopener">open-matchday</a>.</li>
-  </ul>
+<section>
+  <h2>Desempenho em casa e fora</h2>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Local</th><th>Jogos</th><th>Cantos a favor</th><th>Cantos contra</th><th>Total cantos</th><th>Over 9,5</th></tr></thead>
+    <tbody id="venueStats"><tr><td colspan="6">Carrega os dados para começar.</td></tr></tbody>
+  </table></div>
 </section>
+
+<section>
+  <h2>Jogos recentes da equipa</h2>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Data</th><th>Casa</th><th>Resultado</th><th>Fora</th><th>Cantos</th><th>Total</th></tr></thead>
+    <tbody id="recent"><tr><td colspan="6">Sem dados carregados.</td></tr></tbody>
+  </table></div>
+</section>
+<p><small>Fonte: <a href="https://github.com/oladeeayo/open-matchday" target="_blank" rel="noopener">open-matchday</a>. As estimativas são estatísticas históricas, não garantias. A disponibilidade dos dados depende da competição e época selecionadas.</small></p>
 </main>
-<footer>Futebol Stats · Projeto pessoal</footer>
+
 <script>
-
+  
 "use strict";
-
-const BASES = [
-  "https://cdn.jsdelivr.net/gh/oladeeayo/open-matchday@master/data",
-  "https://raw.githubusercontent.com/oladeeayo/open-matchday/master/data"
-];
-
-const LEAGUES = [
-  ["POR_1_primeira-liga","Portugal — Primeira Liga"],
-  ["ENG_1_premier-league","Inglaterra — Premier League"],
-  ["ESP_1_la-liga","Espanha — La Liga"],
-  ["ITA_1_serie-a","Itália — Serie A"],
-  ["GER_1_bundesliga","Alemanha — Bundesliga"],
-  ["FRA_1_ligue-1","França — Ligue 1"],
-  ["NED_1_eredivisie","Países Baixos — Eredivisie"],
-  ["BRA_1_serie-a","Brasil — Série A"],
-  ["UEFA_1_champions-league","UEFA — Liga dos Campeões"],
-  ["BEL_1_pro-league","Bélgica — Pro League"],
-  ["TUR_1_super-lig","Turquia — Süper Lig"],
-  ["ENG_2_championship","Inglaterra — Championship"],
-  ["USA_1_mls","EUA — MLS"]
-];
 
 const $ = id => document.getElementById(id);
 let matches = [];
-let fixtures = [];
+let fixturesData = [];
 
 function parseCSV(text) {
-  const lines = text.replace(/^\uFEFF/,"").split(/\r?\n/).filter(x => x.trim());
-  if (!lines.length) return [];
+  const rows = [];
+  let row = [], field = "", quoted = false;
 
-  function split(line) {
-    let out = [], s = "", q = false;
-    for (let i = 0; i < line.length; i++) {
-      const c = line[i];
-      if (c === '"') {
-        if (q && line[i+1] === '"') { s += '"'; i++; }
-        else q = !q;
-      } else if (c === "," && !q) {
-        out.push(s.trim()); s = "";
-      } else s += c;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+
+    if (quoted) {
+      if (c === '"' && text[i + 1] === '"') {
+        field += '"';
+        i++;
+      } else if (c === '"') {
+        quoted = false;
+      } else {
+        field += c;
+      }
+    } else {
+      if (c === '"') quoted = true;
+      else if (c === ",") {
+        row.push(field);
+        field = "";
+      } else if (c === "\n") {
+        row.push(field);
+        rows.push(row);
+        row = [];
+        field = "";
+      } else if (c !== "\r") {
+        field += c;
+      }
     }
-    out.push(s.trim());
-    return out;
   }
 
-  const heads = split(lines[0]).map(x => x.trim().toLowerCase());
+  if (field || row.length) {
+    row.push(field);
+    rows.push(row);
+  }
 
-  return lines.slice(1).map(line => {
-    const vals = split(line);
-    const row = {};
-    heads.forEach((h,i) => row[h] = (vals[i] ?? "").trim());
-    return row;
-  }).filter(r => Object.values(r).some(v => v !== ""));
+  if (!rows.length) return [];
+
+  const headers = rows.shift().map(x => x.trim().replace(/^\uFEFF/, ""));
+
+  return rows.filter(r => r.some(v => v.trim() !== "")).map(r => {
+    const obj = {};
+    headers.forEach((h, i) => obj[h] = (r[i] || "").trim());
+    return obj;
+  });
 }
 
-function get(row, keys) {
-  for (const k of keys) {
-    const v = row[k.toLowerCase()];
-    if (v !== undefined && String(v).trim() !== "") return String(v).trim();
+function getValue(obj, names) {
+  for (const name of names) {
+    if (obj[name] !== undefined && obj[name] !== "") return obj[name];
   }
+
+  const keys = Object.keys(obj);
+  for (const name of names) {
+    const found = keys.find(k => k.toLowerCase() === name.toLowerCase());
+    if (found && obj[found] !== "") return obj[found];
+  }
+
   return "";
 }
 
-function toNumber(v) {
-  if (v === null || v === undefined || String(v).trim() === "") return null;
-  const x = Number(String(v).trim().replace(",", "."));
-  return Number.isFinite(x) ? x : null;
+function numberValue(value) {
+  if (value === null || value === undefined || value === "") return null;
+  const n = Number(String(value).replace(",", "."));
+  return Number.isFinite(n) ? n : null;
 }
 
-function getNum(row, keys) {
-  for (const k of keys) {
-    const x = toNumber(row[k.toLowerCase()]);
-    if (x !== null) return x;
+function esc(value) {
+  return String(value ?? "").replace(/[&<>"']/g, c => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
+  })[c]);
+}
+
+/* Resultados históricos: exige golos finais válidos. */
+function normalizeResult(row) {
+  const home = getValue(row, ["home", "home_team", "HomeTeam"]);
+  const away = getValue(row, ["away", "away_team", "AwayTeam"]);
+  const homeGoals = numberValue(getValue(row, [
+    "ft_home", "home_score", "home_goals", "FTHG"
+  ]));
+  const awayGoals = numberValue(getValue(row, [
+    "ft_away", "away_score", "away_goals", "FTAG"
+  ]));
+
+  if (!home || !away || homeGoals === null || awayGoals === null) {
+    return null;
   }
-  return null;
-}
-
-function normalize(row) {
-  const home = get(row, ["home","home_team","hometeam","home team"]);
-  const away = get(row, ["away","away_team","awayteam","away team"]);
-
-  if (!home || !away) return null;
-
-  const homeGoals = getNum(row, [
-    "ft_home","home_score","homescore","home_goals","fthg","homegoals"
-  ]);
-  const awayGoals = getNum(row, [
-    "ft_away","away_score","awayscore","away_goals","ftag","awaygoals"
-  ]);
 
   return {
-    date: get(row, ["date","match_date","matchdate"]),
-    time: get(row, ["time","kickoff"]),
+    date: getValue(row, ["date", "match_date", "Date"]),
     home,
     away,
     homeGoals,
     awayGoals,
-    homeCorners: getNum(row, ["home_corners","hc","home_corner","homecorners"]),
-    awayCorners: getNum(row, ["away_corners","ac","away_corner","awaycorners"]),
-    played: homeGoals !== null && awayGoals !== null
+    homeCorners: numberValue(getValue(row, [
+      "home_corners", "HomeCorners", "HC", "home_corner"
+    ])),
+    awayCorners: numberValue(getValue(row, [
+      "away_corners", "AwayCorners", "AC", "away_corner"
+    ])),
+    played: true
   };
 }
 
-async function fetchCSV(path) {
-  let lastError;
-  for (const base of BASES) {
-    try {
-      const response = await fetch(`${base}/${path}`, {cache:"no-store"});
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const text = await response.text();
-      if (!text.trim() || text.trim().startsWith("<")) {
-        throw new Error("A resposta não parece ser CSV");
-      }
-      return text;
-    } catch (e) {
-      lastError = e;
-    }
-  }
-  throw lastError || new Error("Falha ao obter o ficheiro.");
-}
-
-function dateValue(s) {
-  if (!s) return 0;
-  const d = new Date(s.length === 10 ? s + "T12:00:00" : s);
-  return Number.isNaN(d.getTime()) ? 0 : d.getTime();
-}
-
-function average(arr) {
-  const values = arr.filter(x => x !== null && Number.isFinite(x));
-  return values.length ? values.reduce((s,x) => s+x,0)/values.length : null;
-}
-
-function fmt(x,d=2) {
-  return x === null || x === undefined || !Number.isFinite(x)
-    ? "—"
-    : x.toLocaleString("pt-PT",{minimumFractionDigits:d,maximumFractionDigits:d});
-}
-
-function pct(a,b) {
-  return b ? fmt(100*a/b,1)+"%" : "—";
-}
-
-function esc(s) {
-  return String(s ?? "").replace(/[&<>"']/g,c => ({
-    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
-  }[c]));
-}
-
-function setStatus(message,kind="") {
-  $("status").textContent = message;
-  $("status").className = "status " + kind;
-}
-
-function setTable(id,heads,rows,empty="Sem dados disponíveis.") {
-  const table = $(id);
-  table.innerHTML =
-    "<thead><tr>" +
-    heads.map(h => "<th>"+esc(h)+"</th>").join("") +
-    "</tr></thead><tbody>" +
-    (rows.length
-      ? rows.map(row => "<tr>"+row.map(v =>
-          "<td>"+(v === null || v === undefined ? "—" : v)+"</td>"
-        ).join("")+"</tr>").join("")
-      : `<tr><td colspan="${heads.length}" class="muted">${esc(empty)}</td></tr>`
-    ) + "</tbody>";
-}
-
-function metric(label,value,sub="") {
-  return `<div class="metric">
-    <div class="ml">${esc(label)}</div>
-    <div class="mv">${value === null ? "—" : esc(value)}</div>
-    <div class="ms">${esc(sub)}</div>
-  </div>`;
-}
-
-function teamGames(team) {
-  return matches.filter(m => m.home === team || m.away === team)
-    .sort((a,b) => dateValue(b.date)-dateValue(a.date));
-}
-
-function teamStats(team) {
-  const all = teamGames(team);
-  const home = all.filter(m => m.home === team);
-  const away = all.filter(m => m.away === team);
-
-  const gf = all.map(m => m.home === team ? m.homeGoals : m.awayGoals);
-  const ga = all.map(m => m.home === team ? m.awayGoals : m.homeGoals);
-  const cf = all.map(m => m.home === team ? m.homeCorners : m.awayCorners);
-  const ca = all.map(m => m.home === team ? m.awayCorners : m.homeCorners);
-
-  const points = all.map(m => {
-    const x = m.home === team ? m.homeGoals : m.awayGoals;
-    const y = m.home === team ? m.awayGoals : m.homeGoals;
-    return x === null || y === null ? null : x > y ? 3 : x === y ? 1 : 0;
-  });
+/* Calendário: aceita jogos sem resultado final. */
+function normalizeFixture(row) {
+  const home = getValue(row, ["home", "home_team", "HomeTeam"]);
+  const away = getValue(row, ["away", "away_team", "AwayTeam"]);
+  if (!home || !away) return null;
 
   return {
-    team,
-    played: all.filter(m => m.played).length,
-    gf: average(gf), ga: average(ga), points: average(points),
-    hgf: average(home.map(m => m.homeGoals)),
-    hga: average(home.map(m => m.awayGoals)),
-    agf: average(away.map(m => m.awayGoals)),
-    aga: average(away.map(m => m.homeGoals)),
-    cf: average(cf), ca: average(ca),
-    hcf: average(home.map(m => m.homeCorners)),
-    hca: average(home.map(m => m.awayCorners)),
-    acf: average(away.map(m => m.awayCorners)),
-    aca: average(away.map(m => m.homeCorners))
+    date: getValue(row, ["date", "match_date", "Date"]),
+    time: getValue(row, ["time", "Time"]),
+    home,
+    away
   };
-  }
-  
-function render() {
-  const played = matches.filter(m => m.played);
-  const teams = [...new Set(played.flatMap(m => [m.home,m.away]))]
-    .sort((a,b) => a.localeCompare(b,"pt"));
-
-  const cornerGames = played.filter(m =>
-    m.homeCorners !== null && m.awayCorners !== null
-  );
-
-  const goals = played.reduce((s,m) => s+m.homeGoals+m.awayGoals,0);
-  const over15 = played.filter(m => m.homeGoals+m.awayGoals > 1.5).length;
-  const over25 = played.filter(m => m.homeGoals+m.awayGoals > 2.5).length;
-  const over95 = cornerGames.filter(m =>
-    m.homeCorners+m.awayCorners > 9.5
-  ).length;
-
-  $("summary").innerHTML = [
-    metric("Resultados carregados",played.length,teams.length+" equipas"),
-    metric("Média de golos/jogo",fmt(played.length ? goals/played.length : null),
-      pct(over15,played.length)+" Over 1,5"),
-    metric("Over 2,5 golos",pct(over25,played.length),
-      over25+" em "+played.length+" jogos"),
-    metric("Média de cantos/jogo",
-      fmt(average(cornerGames.map(m => m.homeCorners+m.awayCorners))),
-      cornerGames.length+" jogos com cantos"),
-    metric("Over 9,5 cantos",pct(over95,cornerGames.length),
-      cornerGames.length+" jogos com dados"),
-    metric("Próximos jogos",fixtures.length,"no calendário disponível")
-  ].join("");
-
-  const stats = teams.map(teamStats);
-
-  setTable("teamTable",
-    ["Equipa","Jogos","Golos pró/jogo","Golos contra/jogo",
-     "Pontos/jogo","Cantos pró/jogo","Cantos contra/jogo",
-     "Over 8,5 cantos","Over 9,5","Over 10,5"],
-    stats.map(s => {
-      const sample = teamGames(s.team).filter(m =>
-        m.homeCorners !== null && m.awayCorners !== null
-      );
-      const over = line => sample.length
-        ? pct(sample.filter(m => m.homeCorners+m.awayCorners > line).length,
-              sample.length)+" ("+sample.length+")"
-        : "—";
-
-      return [
-        esc(s.team),s.played,fmt(s.gf),fmt(s.ga),fmt(s.points),
-        fmt(s.cf),fmt(s.ca),over(8.5),over(9.5),over(10.5)
-      ];
-    })
-  );
-
-  const recent = [...played]
-    .sort((a,b) => dateValue(b.date)-dateValue(a.date)).slice(0,30);
-
-  setTable("recentTable",
-    ["Data","Casa","Resultado","Fora","Cantos"],
-    recent.map(m => [
-      esc(m.date || "—"),esc(m.home),m.homeGoals+"–"+m.awayGoals,
-      esc(m.away),
-      m.homeCorners !== null && m.awayCorners !== null
-        ? `${m.homeCorners}–${m.awayCorners} (${m.homeCorners+m.awayCorners})`
-        : "—"
-    ])
-  );
-
-  const next = [...fixtures]
-    .sort((a,b) => dateValue(a.date)-dateValue(b.date)).slice(0,80);
-
-  setTable("fixtureTable",
-    ["Data","Casa","Fora","Golos estimados","Estimativa Over 1,5","Cantos estimados"],
-    next.map(m => {
-      const h = teamStats(m.home);
-      const a = teamStats(m.away);
-      const homeGoals = average([h.hgf,a.aga]);
-      const awayGoals = average([a.agf,h.hga]);
-      const totalGoals = homeGoals !== null && awayGoals !== null
-        ? homeGoals+awayGoals : null;
-
-      const homeCorners = average([h.hcf,a.aca]);
-      const awayCorners = average([a.acf,h.hca]);
-      const totalCorners = homeCorners !== null && awayCorners !== null
-        ? homeCorners+awayCorners : null;
-
-      return [
-        esc((m.date || "—")+(m.time ? " "+m.time : "")),
-        esc(m.home),esc(m.away),
-        homeGoals !== null && awayGoals !== null
-          ? fmt(homeGoals)+"–"+fmt(awayGoals) : "Amostra insuficiente",
-        totalGoals !== null
-          ? (totalGoals > 1.5 ? "Acima de 1,5" : "Até 1,5") : "—",
-        fmt(totalCorners)
-      ];
-    }),
-    "Não foram encontrados próximos jogos. Os resultados históricos continuam disponíveis."
-  );
 }
 
-async function loadData() {
-  const button = $("loadBtn");
-  button.disabled = true;
-  button.textContent = "A carregar…";
-  matches = [];
-  fixtures = [];
+function dateValue(value) {
+  if (!value) return null;
+  const d = new Date(value);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
 
+function average(values) {
+  const valid = values.filter(v =>
+    v !== null && v !== undefined && Number.isFinite(v)
+  );
+  return valid.length
+    ? valid.reduce((sum, v) => sum + v, 0) / valid.length
+    : null;
+}
+
+function fmt(value, digits = 1) {
+  return value === null || value === undefined || !Number.isFinite(value)
+    ? "N/D"
+    : value.toFixed(digits).replace(".", ",");
+}
+
+function percent(values, predicate) {
+  const valid = values.filter(v => v !== null && Number.isFinite(v));
+  return valid.length
+    ? 100 * valid.filter(predicate).length / valid.length
+    : null;
+}
+
+function recentTeamGames(team, venue = "all", limit = 10) {
+  const list = matches.filter(m =>
+    m.played &&
+    (m.home === team || m.away === team) &&
+    (venue === "all" ||
+      (venue === "home" && m.home === team) ||
+      (venue === "away" && m.away === team))
+  );
+
+  list.sort((a, b) => {
+    const da = dateValue(a.date), db = dateValue(b.date);
+    return (db?.getTime() || 0) - (da?.getTime() || 0);
+  });
+
+  return limit === "all" ? list : list.slice(0, Number(limit));
+}
+
+function teamStats(team, venue = "all", limit = 10) {
+  const games = recentTeamGames(team, venue, limit);
+  const scored = [], conceded = [];
+  const cornersFor = [], cornersAgainst = [], totalCorners = [];
+  let over85 = 0, over95 = 0, over105 = 0, over115 = 0, over125 = 0;
+
+  for (const m of games) {
+    const isHome = m.home === team;
+    scored.push(isHome ? m.homeGoals : m.awayGoals);
+    conceded.push(isHome ? m.awayGoals : m.homeGoals);
+
+    if (m.homeCorners !== null && m.awayCorners !== null) {
+      const own = isHome ? m.homeCorners : m.awayCorners;
+      const opp = isHome ? m.awayCorners : m.homeCorners;
+      const total = own + opp;
+
+      cornersFor.push(own);
+      cornersAgainst.push(opp);
+      totalCorners.push(total);
+
+      if (total >= 9) over85++;
+      if (total >= 10) over95++;
+      if (total >= 11) over105++;
+      if (total >= 12) over115++;
+      if (total >= 13) over125++;
+    }
+  }
+
+  const n = totalCorners.length;
+  return {
+    games: games.length,
+    goalsFor: average(scored),
+    goalsAgainst: average(conceded),
+    cornersFor: average(cornersFor),
+    cornersAgainst: average(cornersAgainst),
+    totalCorners: average(totalCorners),
+    over85: n ? 100 * over85 / n : null,
+    over95: n ? 100 * over95 / n : null,
+    over105: n ? 100 * over105 / n : null,
+    over115: n ? 100 * over115 / n : null,
+    over125: n ? 100 * over125 / n : null
+  };
+}
+
+function renderStats(team) {
+  if (!team) return;
+
+  const period = $("period").value;
+  const all = teamStats(team, "all", period);
+  const home = teamStats(team, "home", period);
+  const away = teamStats(team, "away", period);
+
+  $("teamTitle").textContent = "Estatísticas — " + team;
+
+  const cards = [
+    ["Jogos analisados", all.games],
+    ["Golos marcados / jogo", fmt(all.goalsFor)],
+    ["Golos sofridos / jogo", fmt(all.goalsAgainst)],
+    ["Cantos a favor / jogo", fmt(all.cornersFor)],
+    ["Cantos contra / jogo", fmt(all.cornersAgainst)],
+    ["Média total de cantos", fmt(all.totalCorners)],
+    ["Over 8,5 cantos", all.over85 === null ? "N/D" : fmt(all.over85) + "%"],
+    ["Over 9,5 cantos", all.over95 === null ? "N/D" : fmt(all.over95) + "%"],
+    ["Over 10,5 cantos", all.over105 === null ? "N/D" : fmt(all.over105) + "%"],
+    ["Over 11,5 cantos", all.over115 === null ? "N/D" : fmt(all.over115) + "%"],
+    ["Over 12,5 cantos", all.over125 === null ? "N/D" : fmt(all.over125) + "%"]
+  ];
+
+  $("stats").innerHTML = cards.map(([label, value]) =>
+    `<div class="stat"><span>${esc(label)}</span><strong>${esc(value)}</strong></div>`
+  ).join("");
+
+  $("venueStats").innerHTML = [
+    ["Casa", home],
+    ["Fora", away],
+    ["Total", all]
+  ].map(([label, s]) =>
+    `<tr><td>${label}</td><td>${s.games}</td>
+    <td>${fmt(s.cornersFor)}</td><td>${fmt(s.cornersAgainst)}</td>
+    <td>${fmt(s.totalCorners)}</td>
+    <td>${s.over95 === null ? "N/D" : fmt(s.over95) + "%"}</td></tr>`
+  ).join("");
+
+  const recent = recentTeamGames(team, "all", period);
+
+  $("recent").innerHTML = recent.length ? recent.map(m => {
+    const total = m.homeCorners !== null && m.awayCorners !== null
+      ? m.homeCorners + m.awayCorners : null;
+
+    return `<tr><td>${esc(m.date || "N/D")}</td>
+    <td>${esc(m.home)}</td><td>${m.homeGoals} - ${m.awayGoals}</td>
+    <td>${esc(m.away)}</td>
+    <td>${m.homeCorners === null || m.awayCorners === null
+      ? "N/D" : m.homeCorners + " - " + m.awayCorners}</td>
+    <td>${total === null ? "N/D" : total}</td></tr>`;
+  }).join("") : `<tr><td colspan="6">Não existem jogos para esta equipa.</td></tr>`;
+}
+
+function estimateMatch(home, away) {
+  const hHome = teamStats(home, "home", 10);
+  const aAway = teamStats(away, "away", 10);
+
+  const homeGoals = average([hHome.goalsFor, aAway.goalsAgainst]);
+  const awayGoals = average([aAway.goalsFor, hHome.goalsAgainst]);
+  const homeCorners = average([hHome.cornersFor, aAway.cornersAgainst]);
+  const awayCorners = average([aAway.cornersFor, hHome.cornersAgainst]);
+
+  const sample = [
+    ...recentTeamGames(home, "home", 10),
+    ...recentTeamGames(away, "away", 10)
+  ].filter(m => m.homeCorners !== null && m.awayCorners !== null);
+
+  const totals = sample.map(m => m.homeCorners + m.awayCorners);
+
+  return {
+    homeGoals,
+    awayGoals,
+    totalGoals: homeGoals !== null && awayGoals !== null
+      ? homeGoals + awayGoals : null,
+    totalCorners: homeCorners !== null && awayCorners !== null
+      ? homeCorners + awayCorners : null,
+    over95: percent(totals, n => n >= 10),
+    over105: percent(totals, n => n >= 11),
+    cornerSample: totals.length
+  };
+}
+
+function renderFixtures() {
+  const container = $("fixtures");
+  const status = $("fixtureStatus");
+  const filter = $("fixtureFilter").value;
+
+  if (!fixturesData.length) {
+    container.innerHTML = "";
+    status.textContent = "Não foram encontrados jogos futuros no calendário disponível.";
+    return;
+  }
+
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+
+  let list = fixturesData.filter(m => {
+    const d = dateValue(m.date);
+    if (!d) return filter === "all";
+    if (d < now) return false;
+    if (filter === "all") return true;
+
+    const limit = new Date(now);
+    limit.setDate(limit.getDate() + Number(filter));
+    return d <= limit;
+  });
+
+  list.sort((a, b) =>
+    (dateValue(a.date)?.getTime() || 0) -
+    (dateValue(b.date)?.getTime() || 0)
+  );
+
+  if (!list.length) {
+    container.innerHTML = "";
+    status.textContent = "Não há jogos dentro do período selecionado.";
+    return;
+  }
+
+  status.textContent = `${list.length} jogo(s) encontrado(s).`;
+
+  container.innerHTML = list.map(m => {
+    const p = estimateMatch(m.home, m.away);
+
+    return `<article class="matchcard">
+      <span class="pill">${esc(m.date || "Data por confirmar")} ${esc(m.time || "")}</span>
+      <div class="teams">${esc(m.home)}<br>vs.<br>${esc(m.away)}</div>
+      <div class="predgrid">
+        <div class="pred"><span>Golos — casa</span><strong>${fmt(p.homeGoals)}</strong></div>
+        <div class="pred"><span>Golos — fora</span><strong>${fmt(p.awayGoals)}</strong></div>
+        <div class="pred"><span>Total estimado de golos</span><strong>${fmt(p.totalGoals)}</strong></div>
+        <div class="pred"><span>Total estimado de cantos</span><strong>${fmt(p.totalCorners)}</strong></div>
+        <div class="pred"><span>Histórico Over 9,5 cantos</span><strong>${p.over95 === null ? "N/D" : fmt(p.over95) + "%"}</strong></div>
+        <div class="pred"><span>Histórico Over 10,5 cantos</span><strong>${p.over105 === null ? "N/D" : fmt(p.over105) + "%"}</strong></div>
+      </div>
+      <p class="muted">Amostra de cantos: ${p.cornerSample} jogos. É uma referência histórica, não uma probabilidade calibrada para esta partida.</p>
+    </article>`;
+  }).join("");
+}
+
+async function loadGames() {
   const league = $("league").value;
   const season = $("season").value;
-  setStatus("A carregar resultados e calendário…");
+  const button = $("load");
+
+  button.disabled = true;
+  $("status").textContent = "A carregar resultados históricos...";
+  $("fixtureStatus").textContent = "A procurar o calendário...";
+  $("fixtures").innerHTML = "";
+  $("stats").innerHTML = "";
+  matches = [];
+  fixturesData = [];
+
+  const base = `https://raw.githubusercontent.com/oladeeayo/open-matchday/master/data/${league}/`;
 
   try {
-    const csv = await fetchCSV(`${league}/results_${season}.csv`);
-    const raw = parseCSV(csv);
-    matches = raw.map(normalize).filter(m => m && m.played);
+    const response = await fetch(`${base}results_${season}.csv`);
+
+    if (!response.ok) {
+      throw new Error(`Não foi possível obter os resultados (HTTP ${response.status}).`);
+    }
+
+    const csv = await response.text();
+    matches = parseCSV(csv).map(normalizeResult).filter(Boolean);
 
     if (!matches.length) {
-      const headers = raw.length ? Object.keys(raw[0]).join(", ") : "nenhuma linha";
-      throw new Error(
-        "O CSV foi recebido, mas não encontrei resultados com equipas e golos finais. Cabeçalhos: "+headers
-      );
+      throw new Error("O ficheiro foi carregado, mas não foram reconhecidos resultados válidos.");
     }
+
+    const teams = [...new Set(matches.flatMap(m => [m.home, m.away]))]
+      .sort((a, b) => a.localeCompare(b));
+
+    $("team").innerHTML = teams.map(t =>
+      `<option value="${esc(t)}">${esc(t)}</option>`
+    ).join("");
+
+    $("status").textContent = `${matches.length} resultados carregados.`;
 
     try {
-      const fixtureCSV = await fetchCSV(`${league}/fixtures_${season}.csv`);
-      fixtures = parseCSV(fixtureCSV)
-        .map(normalize)
-        .filter(m => m && !m.played);
+      const fixtureResponse = await fetch(`${base}fixtures_${season}.csv`);
+
+      if (fixtureResponse.ok) {
+        const fixtureCSV = await fixtureResponse.text();
+        fixturesData = parseCSV(fixtureCSV)
+          .map(normalizeFixture)
+          .filter(Boolean);
+      }
     } catch (e) {
-      fixtures = [];
+      console.warn("Calendário indisponível:", e);
     }
 
-    const playedKeys = new Set(
-      matches.map(m => `${m.date}|${m.home}|${m.away}`)
-    );
+    renderStats($("team").value);
+    renderFixtures();
 
-    fixtures = fixtures.filter(m =>
-      !playedKeys.has(`${m.date}|${m.home}|${m.away}`)
-    );
-
-    render();
-    setStatus(
-      `Carregado: ${matches.length} resultados e ${fixtures.length} próximos jogos. Os cantos dependem dos dados disponíveis.`,
-      "success"
-    );
-  } catch (e) {
-    $("summary").innerHTML =
-      '<p class="muted">Não foi possível apresentar as estatísticas.</p>';
-
-    setTable("teamTable",["Estado"],[]);
-    setTable("recentTable",["Estado"],[]);
-    setTable("fixtureTable",["Estado"],[]);
-    setStatus("Erro: "+e.message,"error");
+  } catch (error) {
+    console.error(error);
+    $("status").textContent = `Erro: ${error.message}`;
+    $("fixtureStatus").textContent = "Não foi possível carregar os dados.";
+    $("stats").innerHTML = "";
+    $("venueStats").innerHTML =
+      '<tr><td colspan="6">Sem dados disponíveis.</td></tr>';
+    $("recent").innerHTML =
+      '<tr><td colspan="6">Sem dados disponíveis.</td></tr>';
+    $("fixtures").innerHTML = "";
   } finally {
     button.disabled = false;
-    button.textContent = "Carregar dados";
   }
 }
 
-$("league").innerHTML = LEAGUES.map(([id,name]) =>
-  `<option value="${id}">${esc(name)}</option>`
-).join("");
+$("load").addEventListener("click", loadGames);
 
-$("loadBtn").addEventListener("click",loadData);
-loadData();
+$("team").addEventListener("change", () => {
+  if (matches.length) renderStats($("team").value);
+});
+
+$("period").addEventListener("change", () => {
+  if (matches.length) renderStats($("team").value);
+});
+
+$("fixtureFilter").addEventListener("change", renderFixtures);
+
+loadGames();
 </script>
 </body>
 </html>
