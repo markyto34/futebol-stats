@@ -103,6 +103,7 @@ if(games.length < minHistory+1) {
  process.exit(2);
 }
 const history=[], goalErrors=[], briers=[], outcomes=[], cornerErrors=[], cornerOver=[];
+const baselineGoalErrors=[], baselineBriers=[], baselineOutcomes=[], baselineCornerErrors=[], baselineCornerOver=[];
 let index = 0;
 while (index < games.length) {
   // All matches on the same date are predicted from the same pre-date history.
@@ -113,13 +114,27 @@ while (index < games.length) {
 
   const dayGames = games.slice(index, end);
   if (history.length >= minHistory) {
+    const baseH = avg(history.map(m => m.hg));
+    const baseA = avg(history.map(m => m.ag));
+    const outcomesHistory = history.map(m => m.hg > m.ag ? 0 : m.hg === m.ag ? 1 : 2);
+    const baseP = [0, 1, 2].map(k => outcomesHistory.filter(x => x === k).length / outcomesHistory.length);
+    const cornerHistory = history.filter(m => m.hc !== null && m.ac !== null).map(m => m.hc + m.ac);
+    const baseCorners = avg(cornerHistory);
+    const baseCornerOverRate = cornerHistory.length ? cornerHistory.filter(x => x > 8.5).length / cornerHistory.length : null;
+
     for (const g of dayGames) {
       const pred = predict(history, g);
+      const actual = g.hg > g.ag ? 0 : g.hg === g.ag ? 1 : 2;
       if (pred) {
         goalErrors.push(Math.abs(pred.lh-g.hg), Math.abs(pred.la-g.ag));
-        const actual = g.hg > g.ag ? 0 : g.hg === g.ag ? 1 : 2;
         briers.push(pred.p.reduce((sum,p,i) => sum + (p-(i===actual?1:0))**2, 0));
         outcomes.push(pred.p.indexOf(Math.max(...pred.p)) === actual);
+      }
+      // Baseline: historical league-wide average goals and 1X2 frequencies only.
+      if (baseH !== null && baseA !== null) {
+        baselineGoalErrors.push(Math.abs(baseH-g.hg), Math.abs(baseA-g.ag));
+        baselineBriers.push(baseP.reduce((sum,p,i) => sum + (p-(i===actual?1:0))**2, 0));
+        baselineOutcomes.push(baseP.indexOf(Math.max(...baseP)) === actual);
       }
       if (g.hc !== null && g.ac !== null) {
         const hs = history.filter(m => m.hc !== null && m.ac !== null);
@@ -127,9 +142,14 @@ while (index < games.length) {
         const away = hs.filter(m => m.away === g.away).slice(-10);
         if (home.length >= 3 && away.length >= 3) {
           const eh = avg(home.map(m => m.hc)), ea = avg(away.map(m => m.ac));
-          const expected = eh + ea, actual = g.hc + g.ac;
-          cornerErrors.push(Math.abs(expected-actual));
-          cornerOver.push((expected > 8.5) === (actual > 8.5));
+          const expected = eh + ea, actualCorners = g.hc + g.ac;
+          cornerErrors.push(Math.abs(expected-actualCorners));
+          cornerOver.push((expected > 8.5) === (actualCorners > 8.5));
+        }
+        // Corner baseline: historical league-wide mean and Over 8.5 frequency.
+        if (baseCorners !== null) {
+          baselineCornerErrors.push(Math.abs(baseCorners-(g.hc+g.ac)));
+          baselineCornerOver.push((baseCornerOverRate >= 0.5) === (g.hc+g.ac > 8.5));
         }
       }
     }
@@ -140,11 +160,19 @@ while (index < games.length) {
 function metric(label,x,dp=3){return x.length ? `${label}: ${avg(x).toFixed(dp)} (n=${x.length})` : `${label}: sem amostra suficiente`;}
 console.log("BACKTEST CRONOLÓGICO — sem informação futura");
 console.log(`Jogos válidos: ${games.length}; histórico mínimo: ${minHistory}; datas: ${games[0].date} a ${games.at(-1).date}`);
+console.log("\nMODELO por equipa/forma recente:");
 console.log(metric("MAE golos por equipa",goalErrors));
 console.log(metric("Brier 1X2 (menor é melhor)",briers));
-console.log(metric("Acerto do resultado mais provável",outcomes.map(Boolean).map(Boolean).map(x=>x?1:0), "1"));
-console.log(metric("MAE total de cantos (média histórica casa/fora)",cornerErrors));
-console.log(metric("Acerto classificação Over 8.5 cantos",cornerOver.map(x=>x?1:0),"1"));
+console.log(metric("Acerto do resultado mais provável",outcomes.map(x=>x?1:0),1));
+console.log(metric("MAE total de cantos (média casa/fora)",cornerErrors));
+console.log(metric("Acerto Over 8.5 cantos",cornerOver.map(x=>x?1:0),1));
+console.log("\nBASELINE simples (médias/frequências históricas da liga):");
+console.log(metric("MAE golos por equipa",baselineGoalErrors));
+console.log(metric("Brier 1X2 (menor é melhor)",baselineBriers));
+console.log(metric("Acerto do resultado mais provável",baselineOutcomes.map(x=>x?1:0),1));
+console.log(metric("MAE total de cantos (média da liga)",baselineCornerErrors));
+console.log(metric("Acerto Over 8.5 (frequência histórica >= 50%)",baselineCornerOver.map(x=>x?1:0),1));
+console.log("\nInterpretação: MAE e Brier menores são melhores; acerto maior é melhor. Compare apenas métricas com amostras comparáveis.");
 console.log("\nLimitações: o modelo de cantos é uma referência simples, não o modelo completo do site; sem odds não se mede ROI nem valor esperado. Resultados de uma época curta são instáveis.");
 
 }
