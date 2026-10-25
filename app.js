@@ -366,7 +366,7 @@ function expectedGoalsForMatch(home, away, sampleLimit = 20) {
   const awayGames = recentTeamGames(away, "away", sampleLimit);
 
   // Usar uma amostra maior, mantendo apenas jogos no estádio relevante.
-  if (homeGames.length < 3 || awayGames.length < 3) return null;
+  if (homeGames.length < 1 || awayGames.length < 1) return null;
 
   const homeScored = average(homeGames.map(m => m.homeGoals));
   const homeConceded = average(homeGames.map(m => m.awayGoals));
@@ -454,13 +454,11 @@ function calculateCornerPrediction(home, away) {
   const awayCornerSample = aa.cornerSample;
   const cornerGames = homeCornerSample + awayCornerSample;
   // Exigir pelo menos 3 jogos completos por equipa para evitar estimativas extremas com amostras mínimas.
-  if (homeCornerSample < 3 || awayCornerSample < 3) {
-    return { insufficientSample: true, homeCornerSample, awayCornerSample, cornerGames };
-  }
+  const lowSample = homeCornerSample < 3 || awayCornerSample < 3;
   const lines = [8.5, 9.5, 10.5, 11.5, 12.5];
   return {
     homeCornerMean, awayCornerMean, total,
-    homeCornerSample, awayCornerSample, cornerGames,
+    homeCornerSample, awayCornerSample, cornerGames, lowSample,
     probabilities: lines.map(line => ({line, over: poissonOverLine(total, line)}))
   };
 }
@@ -469,15 +467,15 @@ function renderCornerPrediction() {
  const result=$("cornerResult"),home=$("cornerHome")?.value,away=$("cornerAway")?.value;if(!result||!home||!away)return;
  if(home===away){result.innerHTML="<p>Escolhe duas equipas diferentes.</p>";return;}const p=calculateCornerPrediction(home,away);
  if(!p){result.innerHTML="<p>Não existem dados de cantos suficientes.</p>";return;}
- if(p.insufficientSample){result.innerHTML=`<p>A amostra é demasiado pequena para uma previsão fiável.</p><p class="muted">${esc(home)} em casa: ${p.homeCornerSample}; ${esc(away)} fora: ${p.awayCornerSample}. São necessários pelo menos 3 jogos válidos por equipa.</p>`;return;}
- result.innerHTML=`<h3>${esc(home)} vs. ${esc(away)}</h3><div class="stats"><div class="stat"><span>Cantos esperados — casa</span><strong>${fmt(p.homeCornerMean,2)}</strong></div><div class="stat"><span>Cantos esperados — fora</span><strong>${fmt(p.awayCornerMean,2)}</strong></div><div class="stat"><span>Total esperado</span><strong>${fmt(p.total,2)}</strong></div></div><div class="tablewrap"><table><thead><tr><th>Linha</th><th>Prob. Over estimada</th><th>Prob. Under estimada</th></tr></thead><tbody>${p.probabilities.map(x=>`<tr><td>${x.line.toString().replace(".",",")}</td><td>${fmt(x.over*100)}%</td><td>${fmt((1-x.over)*100)}%</td></tr>`).join("")}</tbody></table></div><p class="muted">Amostra: ${p.homeCornerSample} jogos em casa e ${p.awayCornerSample} fora; modelo Poisson não validado retrospetivamente.</p>`;
+
+ result.innerHTML=`<h3>${esc(home)} vs. ${esc(away)}</h3><div class="stats"><div class="stat"><span>Cantos esperados — casa</span><strong>${fmt(p.homeCornerMean,2)}</strong></div><div class="stat"><span>Cantos esperados — fora</span><strong>${fmt(p.awayCornerMean,2)}</strong></div><div class="stat"><span>Total esperado</span><strong>${fmt(p.total,2)}</strong></div></div><div class="tablewrap"><table><thead><tr><th>Linha</th><th>Prob. Over estimada</th><th>Prob. Under estimada</th></tr></thead><tbody>${p.probabilities.map(x=>`<tr><td>${x.line.toString().replace(".",",")}</td><td>${fmt(x.over*100)}%</td><td>${fmt((1-x.over)*100)}%</td></tr>`).join("")}</tbody></table></div><p class="muted">Amostra: ${p.homeCornerSample} jogos em casa e ${p.awayCornerSample} fora; ${p.lowSample ? "amostra muito pequena: interpretar com cautela. " : ""}Modelo Poisson não validado retrospetivamente.</p>`;
 }
 
 function expectedHT1X2(home, away) {
   const rows = matches.filter(m => m.htHomeGoals !== null && m.htAwayGoals !== null);
   const homeRows = recentTeamGames(home, "home", 10).filter(m => m.htHomeGoals !== null && m.htAwayGoals !== null);
   const awayRows = recentTeamGames(away, "away", 10).filter(m => m.htHomeGoals !== null && m.htAwayGoals !== null);
-  if (homeRows.length < 3 || awayRows.length < 3 || rows.length < 20) {
+  if (homeRows.length < 1 || awayRows.length < 1 || rows.length < 1) {
     return { available:false, count:rows.length, homeN:homeRows.length, awayN:awayRows.length };
   }
 
@@ -511,9 +509,9 @@ function renderX12HT() {
 function renderCornersHT() {
  const el=$("cornerHtResult"),home=$("cornerHome")?.value,away=$("cornerAway")?.value;if(!el)return;if(!home||!away){el.innerHTML="<p>Seleciona as equipas para a previsão de cantos ao intervalo.</p>";return;}
  const rows=matches.filter(m=>m.htHomeCorners!==null&&m.htAwayCorners!==null),hr=recentTeamGames(home,"home",10).filter(m=>m.htHomeCorners!==null&&m.htAwayCorners!==null),ar=recentTeamGames(away,"away",10).filter(m=>m.htHomeCorners!==null&&m.htAwayCorners!==null);
- if(hr.length<3||ar.length<3||rows.length<20){el.innerHTML=`<p>Não há dados suficientes para uma previsão fiável de cantos HT.</p><p class="muted">Registos válidos: ${rows.length}; ${esc(home)}: ${hr.length}; ${esc(away)}: ${ar.length}. São necessários pelo menos 3 jogos por equipa e 20 na competição.</p>`;return;}
+ if(hr.length<1||ar.length<1){el.innerHTML=`<p>A fonte não tem cantos HT completos suficientes para ambas as equipas.</p><p class="muted">Registos válidos na competição: ${rows.length}; ${esc(home)}: ${hr.length}; ${esc(away)}: ${ar.length}. É necessário pelo menos 1 jogo válido por equipa.</p>`;return;}
  const avg=x=>x.reduce((s,v)=>s+v,0)/x.length,h=(avg(hr.map(m=>m.htHomeCorners))+avg(ar.map(m=>m.htHomeCorners)))/2,v=(avg(ar.map(m=>m.htAwayCorners))+avg(hr.map(m=>m.htAwayCorners)))/2,total=Math.max(.1,h+v),lines=[2.5,3.5,4.5,5.5,6.5];
- el.innerHTML=`<h3>${esc(home)} vs. ${esc(away)} — cantos ao intervalo</h3><div class="stats"><div class="stat"><span>Cantos esperados casa HT</span><strong>${fmt(h,2)}</strong></div><div class="stat"><span>Cantos esperados visitante HT</span><strong>${fmt(v,2)}</strong></div><div class="stat"><span>Total esperado HT</span><strong>${fmt(total,2)}</strong></div></div><div class="tablewrap"><table><thead><tr><th>Linha</th><th>Prob. Over</th><th>Prob. Under</th></tr></thead><tbody>${lines.map(line=>{const over=poissonOverLine(total,line);return `<tr><td>${String(line).replace(".",",")}</td><td>${fmt(over*100)}%</td><td>${fmt((1-over)*100)}%</td></tr>`}).join("")}</tbody></table></div><p class="muted">Amostra HT: ${hr.length} jogos em casa e ${ar.length} fora. Modelo ainda não validado.</p>`;
+ el.innerHTML=`<h3>${esc(home)} vs. ${esc(away)} — cantos ao intervalo</h3><div class="stats"><div class="stat"><span>Cantos esperados casa HT</span><strong>${fmt(h,2)}</strong></div><div class="stat"><span>Cantos esperados visitante HT</span><strong>${fmt(v,2)}</strong></div><div class="stat"><span>Total esperado HT</span><strong>${fmt(total,2)}</strong></div></div><div class="tablewrap"><table><thead><tr><th>Linha</th><th>Prob. Over</th><th>Prob. Under</th></tr></thead><tbody>${lines.map(line=>{const over=poissonOverLine(total,line);return `<tr><td>${String(line).replace(".",",")}</td><td>${fmt(over*100)}%</td><td>${fmt((1-over)*100)}%</td></tr>`}).join("")}</tbody></table></div><p class="muted">Amostra HT: ${hr.length} jogos em casa e ${ar.length} fora. ${hr.length<3||ar.length<3 ? "Amostra muito pequena: interpretar com cautela. " : ""}Modelo ainda não validado.</p>`;
 }
 function renderX12Analysis() {
  const home=$("x12Home")?.value,away=$("x12Away")?.value,result=$("x12Result");if(!home||!away||!result)return;if(home===away){result.innerHTML="<p>Escolhe duas equipas diferentes.</p>";return;}
