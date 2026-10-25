@@ -786,13 +786,31 @@ async function loadGames() {
       );
     }
 
-    // Data de última alteração indicada pelos cabeçalhos HTTP do ficheiro CSV.
-    const lastModified = response.headers.get("Last-Modified");
-    const csvUpdatedAt = lastModified && !Number.isNaN(Date.parse(lastModified))
-      ? new Date(lastModified).toLocaleString("pt-PT", {
-          dateStyle: "short", timeStyle: "short", timeZone: "Europe/Lisbon"
-        })
-      : null;
+    // A fonte publica a data da compilação em build_summary.json.
+    let sourceUpdateLabel = "A data de atualização da fonte não está disponível.";
+    try {
+      const summaryResponse = await fetch("https://raw.githubusercontent.com/oladeeayo/open-matchday/master/build_summary.json");
+      if (summaryResponse.ok) {
+        const summary = await summaryResponse.json();
+        const leagueInfo = Array.isArray(summary.leagues)
+          ? summary.leagues.find(item => item.folder === "data/" + league)
+          : null;
+        const generated = summary.generated_utc ? new Date(summary.generated_utc) : null;
+        const generatedLabel = generated && !Number.isNaN(generated.getTime())
+          ? generated.toLocaleString("pt-PT", { dateStyle: "short", timeStyle: "short", timeZone: "Europe/Lisbon" })
+          : null;
+        const latestLabel = leagueInfo && leagueInfo.latest
+          ? new Date(leagueInfo.latest + "T12:00:00Z").toLocaleDateString("pt-PT", { dateStyle: "short", timeZone: "Europe/Lisbon" })
+          : null;
+        if (generatedLabel && latestLabel) {
+          sourceUpdateLabel = "Última compilação da fonte: " + generatedLabel + " (hora de Portugal). Último jogo registado nesta competição: " + latestLabel + ".";
+        } else if (generatedLabel) {
+          sourceUpdateLabel = "Última compilação da fonte: " + generatedLabel + " (hora de Portugal); a fonte não indicou a data do último jogo desta competição.";
+        }
+      }
+    } catch (metadataError) {
+      console.warn("Não foi possível obter a data da fonte:", metadataError);
+    }
 
     const csv = await response.text();
     matches = parseCSV(csv).map(normalizeResult).filter(Boolean);
@@ -809,7 +827,7 @@ async function loadGames() {
     populateTeamSelectors(teams);
 
     $("status").textContent =
-      `${matches.length} resultados carregados; ${teams.length} equipas encontradas. ${csvUpdatedAt ? "Última alteração do CSV no GitHub: " + csvUpdatedAt + ". " : "A fonte não disponibilizou a data de alteração deste CSV. "}Já podes escolher as equipas para a análise.`;
+      `${matches.length} resultados carregados; ${teams.length} equipas encontradas. ${sourceUpdateLabel} Já podes escolher as equipas para a análise.`;
 
     try {
       const fixtureResponse =
