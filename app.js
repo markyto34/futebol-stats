@@ -294,14 +294,14 @@ function renderStats(team) {
     ["Jogos analisados", all.games],
     ["Golos marcados / jogo", fmt(all.goalsFor)],
     ["Golos sofridos / jogo", fmt(all.goalsAgainst)],
-    ["Cantos a favor / jogo", fmt(all.cornersFor)],
-    ["Cantos contra / jogo", fmt(all.cornersAgainst)],
-    ["Média total de cantos", fmt(all.totalCorners)],
-    ["Over 8,5 cantos", all.over85 === null ? "N/D" : fmt(all.over85) + "%"],
-    ["Over 9,5 cantos", all.over95 === null ? "N/D" : fmt(all.over95) + "%"],
-    ["Over 10,5 cantos", all.over105 === null ? "N/D" : fmt(all.over105) + "%"],
-    ["Over 11,5 cantos", all.over115 === null ? "N/D" : fmt(all.over115) + "%"],
-    ["Over 12,5 cantos", all.over125 === null ? "N/D" : fmt(all.over125) + "%"]
+    ["Cantos a favor / jogo (amostra: " + all.cornerSample + ")", fmt(all.cornersFor)],
+    ["Cantos contra / jogo (amostra: " + all.cornerSample + ")", fmt(all.cornersAgainst)],
+    ["Média total de cantos (amostra: " + all.cornerSample + ")", fmt(all.totalCorners)],
+    ["Over 8,5 cantos (amostra: " + all.cornerSample + ")", all.over85 === null ? "N/D" : fmt(all.over85) + "%"],
+    ["Over 9,5 cantos (amostra: " + all.cornerSample + ")", all.over95 === null ? "N/D" : fmt(all.over95) + "%"],
+    ["Over 10,5 cantos (amostra: " + all.cornerSample + ")", all.over105 === null ? "N/D" : fmt(all.over105) + "%"],
+    ["Over 11,5 cantos (amostra: " + all.cornerSample + ")", all.over115 === null ? "N/D" : fmt(all.over115) + "%"],
+    ["Over 12,5 cantos (amostra: " + all.cornerSample + ")", all.over125 === null ? "N/D" : fmt(all.over125) + "%"]
   ];
 
   $("stats").innerHTML = cards.map(([label, value]) =>
@@ -314,7 +314,7 @@ function renderStats(team) {
     ["Total", all]
   ].map(([label, s]) =>
     `<tr><td>${label}</td><td>${s.games}</td>
-    <td>${fmt(s.cornersFor)}</td><td>${fmt(s.cornersAgainst)}</td>
+    <td>${s.cornerSample} jogos</td><td>${fmt(s.cornersFor)}</td><td>${fmt(s.cornersAgainst)}</td>
     <td>${fmt(s.totalCorners)}</td>
     <td>${s.over95 === null ? "N/D" : fmt(s.over95) + "%"}</td></tr>`
   ).join("");
