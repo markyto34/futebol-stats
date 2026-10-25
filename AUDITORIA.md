@@ -1,51 +1,59 @@
 # Auditoria técnica — Futebol Stats
 
-Data da auditoria: 25/10/2026
+Data: 25/10/2026  
+Repositório: https://github.com/markyto34/futebol-stats  
+Site: https://markyto34.github.io/futebol-stats/
 
-## Âmbito e limitações
+## Objetivo e estado
 
-Revisão estática do repositório `markyto34/futebol-stats`, das páginas HTML, do JavaScript, dos testes e dos workflows GitHub Actions. Não equivale a um teste visual completo em vários telemóveis/navegadores nem a uma validação estatística com uma base histórica extensa.
+A aplicação é um site estático para consultar resultados históricos e produzir estimativas estatísticas de golos, BTTS, 1X2 e cantos. A interface foi alterada para não depender de odds: as previsões devem apresentar probabilidades, médias/valores esperados e frequências históricas, sem cotações nem comparação com mercado.
 
-## Estado geral
+A última revisão deste documento encontrou conteúdo antigo que ainda descrevia odds justas, edge de mercado e inputs de odds. Esse texto foi removido porque já não descreve o objetivo atual do projeto.
 
-- A aplicação está publicada via GitHub Pages e tem páginas para visão geral, cantos, BTTS, próximos jogos, 1X2 e Over/Under golos.
-- O carregamento atual usa ficheiros CSV públicos do projeto `oladeeayo/open-matchday`; a API-Football não está integrada no carregamento normal do site.
-- Existem testes de parsing, normalização de dados e funções Poisson, mais workflows manuais para verificar a chave API-Football e consultar jogos da Liga Portugal.
-- O backtest é experimental e não inclui odds históricas; por isso ainda não permite concluir que existe ROI positivo ou vantagem sustentável.
+## O que está confirmado
 
-## Problemas e prioridades
+- O repositório tem páginas HTML separadas para visão geral, jogos, cantos, BTTS, 1X2 e golos.
+- O JavaScript principal é `app.js`; a página de golos também usa `golos.js`.
+- A fonte de dados indicada pela aplicação é o projeto CSV [open-matchday](https://github.com/oladeeayo/open-matchday).
+- Existe cache de sessão com validade de 15 minutos em `app.js`.
+- O próprio projeto contém documentação sobre inspeção de ficheiros CSV.
+- A existência de testes automáticos e de uma publicação bem-sucedida não prova, por si só, que todas as interações funcionam no navegador nem que as previsões estão bem calibradas.
 
-### P0 — Corrigir antes de confiar nas previsões
+## Problemas que exigem validação ou correção
 
-1. **Separar edge do modelo e edge ajustado ao mercado no 1X2.** A interface combina a probabilidade histórica com a probabilidade de mercado e depois calcula o indicador matemático sobre a probabilidade combinada. Esse indicador não é uma estimativa independente do modelo; deve mostrar ambos, claramente identificados.
-2. **Validar calibração e amostras.** As odds justas são derivadas de modelos Poisson simples. Devem ser apresentadas como estimativas experimentais até existirem testes walk-forward multiépoca, Brier/Log Loss e curvas de calibração.
-3. **Auditar disponibilidade dos dados.** A fonte pode não conter cantos, estatísticas HT ou calendários para todas as ligas/épocas. A interface deve distinguir claramente “zero” de “sem dados” e mostrar tamanho de amostra para cada mercado.
-4. **Evitar misturar amostras.** As médias de golos e cantos usam subconjuntos diferentes quando faltam estatísticas. Os rótulos devem deixar explícito o número de jogos usados para cada estimativa.
+### P0 — Integridade das previsões
 
-### P1 — Fiabilidade de dados e testes
+1. **Não confundir ausência de dados com zero.** Se uma equipa não tiver estatísticas de cantos HT, isso não pode ser apresentado como zero cantos. Cada métrica deve usar apenas jogos com essa métrica disponível e indicar o tamanho da amostra.
+2. **Mostrar amostras por métrica.** Médias de golos, cantos FT, cantos HT e resultados podem usar conjuntos de jogos diferentes. O número de jogos deve acompanhar cada estimativa.
+3. **Probabilidades são estimativas, não certezas.** Um modelo Poisson simples assume condições que nem sempre se verificam no futebol (dependência entre equipas, estado do marcador, expulsões e variação de estilo). Não apresentar precisão decimal como se fosse garantia.
+4. **Backtest antes de confiar no modelo.** Avaliar em épocas não usadas para ajustar o modelo, usando separação temporal (walk-forward). Para probabilidades: Brier score, log loss e calibração; para contagens de golos/cantos: MAE e comparação com uma baseline simples. Publicar o número de jogos avaliados e a cobertura dos dados.
+5. **Evitar fuga de informação.** A previsão de cada jogo deve usar apenas dados disponíveis antes desse jogo; médias da época completa não podem ser usadas para prever jogos dessa mesma época no backtest.
 
-5. **Cobertura de testes insuficiente.** Os testes existentes cobrem algumas funções isoladas, mas não validam integralmente o backtest, cálculo das probabilidades 1X2, cantos HT, comparação com odds, filtros de calendário nem comportamento de erros de rede.
-6. **Testar a fonte CSV real.** Adicionar testes de integração com amostras fixas e anonimizadas/guardadas no repositório para detetar alterações de cabeçalhos e campos ausentes.
-7. **Datas e calendários.** A aplicação normaliza formatos de data, mas a lógica de fixtures deve ser testada com datas portuguesas, ISO, viragem do dia e jogos com hora/fuso.
-8. **Cache e atualidade.** A cache de sessão dura 15 minutos. A interface já tenta apresentar data da compilação da fonte; deve deixar explícito quando os dados vieram da cache e quando a fonte não disponibiliza atualização.
-9. **API-Football ainda é apenas uma verificação manual.** Os workflows confirmam acesso/fixtures, mas não recolhem nem guardam diariamente resultados, cantos, cartões ou odds. Não agendar recolha antes de confirmar quota gratuita, cobertura por competição e termos de utilização.
+### P1 — Dados e robustez
 
-### P2 — Melhorias funcionais
+6. **Validar CSVs reais.** Testar cabeçalhos, campos vazios, delimitadores, números em falta, datas inválidas, equipas com nomes alternativos e linhas duplicadas. Manter amostras fixas de CSV para testes de regressão.
+7. **Separar resultados históricos de fixtures futuros.** Um jogo sem resultado não deve entrar em médias ou backtests; um campo vazio não deve ser convertido silenciosamente em zero.
+8. **Cache e falhas de rede.** Informar quando a fonte falha e quando são apresentados dados em cache. Uma cache antiga não deve ser confundida com dados acabados de atualizar.
+9. **Cobertura variável.** Antes de calcular previsões, mostrar a competição, época, intervalo temporal e quantidade de jogos válidos. Se a amostra for pequena, avisar ou impedir a previsão.
+10. **Proteção contra dados externos malformados.** Validar valores numéricos e datas antes de calcular; não confiar cegamente em conteúdo vindo de CSV.
 
-10. **Validação de odds inseridas.** Testar entradas vazias, vírgulas decimais, odds iguais a 1, valores absurdos e mercados incompletos; impedir resultados enganosos.
-11. **Acessibilidade e experiência móvel.** Testar navegação por teclado, foco, mensagens de erro, tabelas largas em ecrãs pequenos e estados de carregamento.
-12. **Monitorização da publicação.** Os workflows de testes e GitHub Pages estão a funcionar; convém manter ambos e verificar o estado após cada alteração.
-13. **Documentação de fontes.** Registar os campos disponíveis por liga/época, limitações, licença/termos e a diferença entre dados históricos e calendário futuro.
+### P1 — Interface e funcionamento
 
-## Plano recomendado
+11. **Revisão completa no navegador ainda necessária.** A análise estática e a passagem de workflows não substituem testar todas as páginas, filtros, seletores, botões, estados vazios e erros de rede.
+12. **Responsividade e acessibilidade.** Verificar em telemóvel e desktop: tabelas largas, navegação por teclado, foco visível, contraste, rótulos dos controlos e mensagens de erro.
+13. **Cache de scripts.** Quando se alteram ficheiros JavaScript, atualizar os parâmetros de versão nas páginas que os carregam, para reduzir a hipótese de o navegador manter uma versão antiga.
+14. **Consistência de conteúdo.** Não deixar texto de odds/mercado em páginas, documentação, comentários ou testes se a aplicação já não oferece essa funcionalidade.
 
-1. Corrigir a semântica do edge 1X2 e acrescentar testes para esse cálculo.
-2. Criar testes unitários e de regressão para o backtest, incluindo amostras iguais para modelo e baseline.
-3. Criar um relatório de cobertura por liga/época: número de jogos, cobertura de cantos FT/HT, datas inicial/final e jogos futuros.
-4. Executar backtests em várias épocas e ligas; reportar MAE, Brier/Log Loss, calibração e amostra de cada métrica.
-5. Só depois avaliar ingestão automática de API-Football, respeitando quota e termos, sem expor a chave no frontend.
-6. Fazer revisão visual em telemóvel e desktop e corrigir os problemas encontrados.
+## Plano de validação final
+
+- [ ] Confirmar sintaxe JavaScript de todos os ficheiros executáveis.
+- [ ] Executar todos os testes automatizados e verificar o resultado dos workflows.
+- [ ] Verificar referências a elementos HTML e funções chamadas por botões/eventos.
+- [ ] Testar CSV com estatísticas ausentes, valores zero legítimos, datas inválidas e ficheiro indisponível.
+- [ ] Confirmar que não há odds nem comparação de mercado na interface.
+- [ ] Fazer backtest temporal separado por liga/época e guardar métricas reproduzíveis.
+- [ ] Abrir cada página publicada em telemóvel e desktop e testar os percursos principais.
 
 ## Conclusão
 
-O site já tem uma base funcional e testes automáticos úteis, mas ainda não deve ser tratado como um sistema de previsões comprovadamente lucrativo. O maior risco atual não é apenas um erro de código: é a falsa confiança em probabilidades teóricas sem validação fora da amostra e sem odds históricas. A prioridade é melhorar transparência, cobertura de testes e evidência estatística antes de acrescentar mais mercados.
+O site pode servir para explorar dados históricos e gerar estimativas experimentais, mas não deve ser considerado um modelo comprovadamente preditivo até passar um backtest temporal robusto e uma revisão funcional no navegador. Esta auditoria distingue os pontos identificados por inspeção do código dos testes que ainda precisam de execução; não declara como concluída nenhuma validação que não tenha sido efetivamente realizada.
