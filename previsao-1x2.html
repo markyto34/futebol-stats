@@ -76,9 +76,9 @@
   </div>
   <h3>Odds reais do mercado (opcional)</h3>
   <div class="controls">
-    <div><label for="x12OddsHome">Odd vitória casa (1)</label><input id="x12OddsHome" type="number" min="1.01" step="0.01" placeholder="Ex.: 2.10"></div>
-    <div><label for="x12OddsDraw">Odd empate (X)</label><input id="x12OddsDraw" type="number" min="1.01" step="0.01" placeholder="Ex.: 3.30"></div>
-    <div><label for="x12OddsAway">Odd vitória visitante (2)</label><input id="x12OddsAway" type="number" min="1.01" step="0.01" placeholder="Ex.: 3.60"></div>
+    <div><label for="x12OddsHome">Odd vitória casa (1)</label><input id="x12OddsHome" type="text" inputmode="decimal" placeholder="Ex.: 2.10"></div>
+    <div><label for="x12OddsDraw">Odd empate (X)</label><input id="x12OddsDraw" type="text" inputmode="decimal" placeholder="Ex.: 3.30"></div>
+    <div><label for="x12OddsAway">Odd vitória visitante (2)</label><input id="x12OddsAway" type="text" inputmode="decimal" placeholder="Ex.: 3.60"></div>
   </div>
   <p><button id="analyseX12" disabled>Calcular previsão 1X2</button></p>
   <div id="x12Result" aria-live="polite"><p>Carrega os dados da competição para começar.</p></div>
@@ -142,6 +142,6 @@
 <p><small>Fonte: <a href="https://github.com/oladeeayo/open-matchday" target="_blank" rel="noopener">open-matchday</a>. As estimativas são estatísticas históricas, não garantias. A disponibilidade dos dados depende da competição e época selecionadas.</small></p>
 </main>
 
-<script src="app.js?v=20261025x12autoodds1" defer></script>
+<script src="app.js?v=20261025x12autoodds2" defer></script>
 </body>
 </html>
