@@ -879,7 +879,7 @@ async function loadGames() {
 
     populateTeamSelectors(teams);
     renderX12HT();
-    renderCornersHT();\n    renderX12HT();\n    renderCornersHT();
+    renderCornersHT();
 
     $("status").textContent =
       `${matches.length} resultados carregados; ${teams.length} equipas encontradas. ${sourceUpdateLabel} Já podes escolher as equipas para a análise.`;
