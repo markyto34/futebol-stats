@@ -433,41 +433,60 @@ function renderX12Analysis() {
     result.innerHTML = "<p>Não existem dados suficientes para calcular esta previsão.</p>";
     return;
   }
-  const probs = [p.home, p.draw, p.away];
+
+  const historical = [p.home, p.draw, p.away];
   const labels = ["Vitória da casa (1)", "Empate (X)", "Vitória visitante (2)"];
   const oddsIds = ["x12OddsHome", "x12OddsDraw", "x12OddsAway"];
-  const marketOdds = oddsIds.map(id => Number($(id)?.value));
-  const hasMarket = marketOdds.every(o => Number.isFinite(o) && o > 1);
-  let marketHtml = "";
+  const marketOdds = oddsIds.map(id => numberValue($(id)?.value));
+  const hasMarket = marketOdds.every(o => o !== null && o > 1);
+  let comparisonHtml = "";
+  let finalProbs = historical;
+
   if (hasMarket) {
-    const implied = marketOdds.map(o => 1 / o);
-    const overround = implied.reduce((s, v) => s + v, 0);
-    const fairMarket = implied.map(v => v / overround);
-    marketHtml = `
-      <h3>Comparação com o mercado</h3>
-      <p class="muted">Margem teórica da casa: ${fmt((overround - 1) * 100)}%. As probabilidades do mercado abaixo são normalizadas para retirar essa margem.</p>
-      <div class="tablewrap"><table><thead><tr><th>Resultado</th><th>Odd mercado</th><th>Prob. modelo</th><th>Prob. mercado*</th><th>Odd justa modelo</th><th>Diferença</th><th>Valor teórico</th></tr></thead><tbody>
-      ${labels.map((label, i) => {
-        const edge = probs[i] * marketOdds[i] - 1;
-        const diff = (probs[i] - fairMarket[i]) * 100;
-        const valueText = edge > 0.02 ? "Potencial positivo" : edge < -0.02 ? "Sem valor aparente" : "Marginal/neutro";
-        return `<tr><td>${label}</td><td>${fmt(marketOdds[i],2)}</td><td>${fmt(probs[i]*100)}%</td><td>${fmt(fairMarket[i]*100)}%</td><td>${fmt(1/probs[i],2)}</td><td>${diff > 0 ? "+" : ""}${fmt(diff)} p.p.</td><td>${valueText} (${edge > 0 ? "+" : ""}${fmt(edge*100)}%)</td></tr>`;
-      }).join("")}
-      </tbody></table></div>
-      <p class="muted">*Estimativa de mercado normalizada. “Valor teórico” é a diferença matemática entre probabilidade estimada × odd e 1; não garante lucro nem demonstra vantagem real sem validação histórica.</p>`;
+    const rawImplied = marketOdds.map(o => 1 / o);
+    const overround = rawImplied.reduce((sum, value) => sum + value, 0);
+    const market = rawImplied.map(value => value / overround);
+
+    // Pool geométrico 50/50: combina mercado e histórico sem deixar
+    // as escalas das duas fontes distorcerem a soma final.
+    const combined = historical.map((value, i) =>
+      Math.sqrt(Math.max(value, 0.000001) * Math.max(market[i], 0.000001))
+    );
+    const combinedTotal = combined.reduce((sum, value) => sum + value, 0);
+    finalProbs = combined.map(value => value / combinedTotal);
+
+    const rows = labels.map((label, i) => {
+      const edge = finalProbs[i] * marketOdds[i] - 1;
+      const difference = (finalProbs[i] - market[i]) * 100;
+      const signal = edge > 0.02 ? "Acima da odd de equilíbrio" :
+        edge < -0.02 ? "Abaixo da odd de equilíbrio" : "Próximo do equilíbrio";
+      return `<tr><td>${label}</td><td>${fmt(marketOdds[i],2)}</td>
+        <td>${fmt(historical[i]*100)}%</td><td>${fmt(market[i]*100)}%</td>
+        <td><strong>${fmt(finalProbs[i]*100)}%</strong></td>
+        <td>${fmt(1/finalProbs[i],2)}</td><td>${difference > 0 ? "+" : ""}${fmt(difference)} p.p.</td>
+        <td>${signal} (${edge > 0 ? "+" : ""}${fmt(edge*100)}%)</td></tr>`;
+    }).join("");
+
+    comparisonHtml = `
+      <h3>Fontes e probabilidades finais ajustadas</h3>
+      <p>Margem teórica da casa: ${fmt((overround - 1) * 100)}%. A probabilidade de mercado é normalizada para retirar essa margem.</p>
+      <p>Combinação: 50% modelo histórico + 50% mercado, através de uma média geométrica normalizada. É uma regra inicial, não uma ponderação validada.</p>
+      <div class="tablewrap"><table><thead><tr><th>Resultado</th><th>Odd atual</th><th>Modelo histórico</th><th>Mercado sem margem</th><th>Prob. final ajustada</th><th>Odd justa final</th><th>Final − mercado</th><th>Leitura matemática</th></tr></thead><tbody>${rows}</tbody></table></div>
+      <p class="muted">O indicador compara a probabilidade final com a odd introduzida. Não garante lucro nem prova que exista vantagem real; isso exige testar o modelo com resultados históricos.</p>`;
   } else {
-    marketHtml = "<p class=\"muted\">Para comparar com o mercado, preenche as três odds decimais (1, X e 2). Introduz as odds da mesma casa de apostas e do mesmo momento.</p>";
+    comparisonHtml = "<p class=\"muted\">Preenche as três odds decimais (1, X e 2) para calcular também a previsão final ajustada. Sem odds completas, são mostradas apenas as probabilidades históricas.</p>";
   }
+
   result.innerHTML = `
     <h3>${esc(home)} vs. ${esc(away)}</h3>
     <div class="stats">
-      <div class="stat"><span>Vitória da casa (1)</span><strong>${fmt(p.home*100)}%</strong><span>Odd justa: ${fmt(1/p.home,2)}</span></div>
-      <div class="stat"><span>Empate (X)</span><strong>${fmt(p.draw*100)}%</strong><span>Odd justa: ${fmt(1/p.draw,2)}</span></div>
-      <div class="stat"><span>Vitória visitante (2)</span><strong>${fmt(p.away*100)}%</strong><span>Odd justa: ${fmt(1/p.away,2)}</span></div>
+      <div class="stat"><span>Modelo histórico — 1</span><strong>${fmt(historical[0]*100)}%</strong><span>Odd justa: ${fmt(1/historical[0],2)}</span></div>
+      <div class="stat"><span>Modelo histórico — X</span><strong>${fmt(historical[1]*100)}%</strong><span>Odd justa: ${fmt(1/historical[1],2)}</span></div>
+      <div class="stat"><span>Modelo histórico — 2</span><strong>${fmt(historical[2]*100)}%</strong><span>Odd justa: ${fmt(1/historical[2],2)}</span></div>
     </div>
-    <p>Golos esperados pelo modelo: casa ${fmt(p.lambdaHome,2)} — visitante ${fmt(p.lambdaAway,2)}. Amostra usada: ${p.homeSample} jogos recentes da equipa da casa em casa e ${p.awaySample} da visitante fora.</p>
-    ${marketHtml}
-    <p class="muted">Modelo estatístico inicial baseado em golos históricos e distribuição de Poisson. Não incorpora onzes, lesões, xG, cartões, calendário ou força individual detalhada. As probabilidades não estão validadas retrospetivamente e não devem ser tratadas como certezas.</p>
+    ${comparisonHtml}
+    <p>Golos esperados pelo modelo: casa ${fmt(p.lambdaHome,2)} — visitante ${fmt(p.lambdaAway,2)}. Amostra: ${p.homeSample} jogos recentes da equipa da casa em casa e ${p.awaySample} da visitante fora.</p>
+    <p class="muted">O modelo histórico usa golos e distribuição de Poisson; não incorpora onzes, lesões, xG ou força individual detalhada. A combinação assume pesos iguais e não foi validada retrospetivamente.</p>
   `;
 }
 
