@@ -45,3 +45,9 @@ header>p{max-width:1100px;margin:10px auto 18px}
 .page-cantos #btts-section,.page-cantos #fixtures-section{display:none}
 .page-btts #fixtures-section,.page-btts #stats-section,.page-btts #venue-section,.page-btts #recent-section{display:none}
 .page-jogos #stats-section,.page-jogos #venue-section,.page-jogos #recent-section{display:none}
+
+/* Página independente de previsão 1X2 */
+.page-1x2 .topnav a[data-page="1x2"]{background:#147d52;color:#fff;border-color:#147d52}
+.page-1x2 #btts-section,.page-1x2 #fixtures-section,.page-1x2 #stats-section,.page-1x2 #venue-section,.page-1x2 #recent-section{display:none}
+.page-1x2 #x12-section{display:block}
+input{width:100%;padding:12px;border-radius:8px;border:1px solid #3a4b66;background:#0c1628;color:white;font-size:14px}
