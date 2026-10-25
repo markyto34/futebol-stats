@@ -542,14 +542,14 @@ function renderCornersHT() {
  const rows=matches.filter(m=>m.htHomeCorners!==null&&m.htAwayCorners!==null);
  const hr=recentTeamGames(home, "home", 10).filter(m=>m.htHomeCorners!==null&&m.htAwayCorners!==null);
  const ar=recentTeamGames(away, "away", 10).filter(m=>m.htHomeCorners!==null&&m.htAwayCorners!==null);
- if(hr.length<2||ar.length<2){el.innerHTML=`<p>Não há dados históricos suficientes de cantos ao intervalo nesta competição/época.</p><p class="muted">A fonte tem ${rows.length} jogos com cantos HT; amostra para ${esc(home)}: ${hr.length}, para ${esc(away)}: ${ar.length}. Não será usada a média dos 90 minutos como se fosse dado HT.</p>`;return;}
+ if(hr.length<3||ar.length<3){el.innerHTML=`<p>Não há dados históricos suficientes de cantos ao intervalo nesta competição/época.</p><p class="muted">A fonte tem ${rows.length} jogos com cantos HT; amostra para ${esc(home)}: ${hr.length}, para ${esc(away)}: ${ar.length}. São necessários pelo menos 3 jogos válidos por equipa. Não será usada a média dos 90 minutos como se fosse dado HT.</p>`;return;}
  const avg=a=>a.reduce((s,v)=>s+v,0)/a.length;
  const h=(avg(hr.map(m=>m.htHomeCorners))+avg(ar.map(m=>m.htHomeCorners)))/2;
  const a=(avg(ar.map(m=>m.htAwayCorners))+avg(hr.map(m=>m.htAwayCorners)))/2;
  const total=Math.max(.1,h+a);
  const lines=[2.5,3.5,4.5,5.5,6.5];
  el.innerHTML=`<h3>${esc(home)} vs. ${esc(away)} — cantos ao intervalo</h3><div class="stats"><div class="stat"><span>Cantos esperados — casa HT</span><strong>${fmt(h,2)}</strong></div><div class="stat"><span>Cantos esperados — visitante HT</span><strong>${fmt(a,2)}</strong></div><div class="stat"><span>Total esperado HT</span><strong>${fmt(total,2)}</strong></div></div>
- <div class="tablewrap"><table><thead><tr><th>Linha</th><th>Over estimado</th><th>Odd justa Over</th><th>Under estimado</th><th>Odd justa Under</th></tr></thead><tbody>${lines.map(line=>{const over=poissonOverLine(total,line);return `<tr><td>${String(line).replace(".",",")}</td><td>${fmt(over*100)}%</td><td>${fmt(1/over,2)}</td><td>${fmt((1-over)*100)}%</td><td>${fmt(1/(1-over),2)}</td></tr>`}).join("")}</tbody></table></div><p class="muted">Amostra HT: ${hr.length} jogos da equipa da casa e ${ar.length} da visitante. Estimativa simples, não validada.</p>`;
+ <div class="tablewrap"><table><thead><tr><th>Linha</th><th>Over estimado</th><th>Odd justa Over</th><th>Under estimado</th><th>Odd justa Under</th></tr></thead><tbody>${lines.map(line=>{const over=poissonOverLine(total,line);return `<tr><td>${String(line).replace(".",",")}</td><td>${fmt(over*100)}%</td><td>${fmt(1/over,2)}</td><td>${fmt((1-over)*100)}%</td><td>${fmt(1/(1-over),2)}</td></tr>`}).join("")}</tbody></table></div><p class="muted">Amostra HT: ${hr.length} jogos da equipa da casa e ${ar.length} da visitante. Estimativa simples, ainda não validada; amostras abaixo de 5 jogos têm elevada incerteza.</p>`;
 }
 function renderX12Analysis() {
   const home = $("x12Home")?.value;
