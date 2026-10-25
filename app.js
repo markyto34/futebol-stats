@@ -877,7 +877,9 @@ async function loadGames() {
     const teams = [...new Set(matches.flatMap(m => [m.home, m.away]))]
       .sort((a, b) => a.localeCompare(b));
 
-    populateTeamSelectors(teams);\n    renderX12HT();\n    renderCornersHT();
+    populateTeamSelectors(teams);
+    renderX12HT();
+    renderCornersHT();\n    renderX12HT();\n    renderCornersHT();
 
     $("status").textContent =
       `${matches.length} resultados carregados; ${teams.length} equipas encontradas. ${sourceUpdateLabel} Já podes escolher as equipas para a análise.`;
@@ -984,12 +986,14 @@ if (missingIds.length) {
       const alt = [...$("x12Away").options].find(o => o.value !== $("x12Home").value);
       if (alt) $("x12Away").value = alt.value;
     }
+    renderX12HT();
   });
   $("x12Away").addEventListener("change", () => {
     if ($("x12Away").value === $("x12Home").value) {
       const alt = [...$("x12Home").options].find(o => o.value !== $("x12Away").value);
       if (alt) $("x12Home").value = alt.value;
     }
+    renderX12HT();
   });
   }
 
