@@ -705,6 +705,9 @@ function populateTeamSelectors(teams) {
   const cornerHome = $("cornerHome");
   const cornerAway = $("cornerAway");
   const analyseCorners = $("analyseCorners");
+  const goalHome = $("goalHome");
+  const goalAway = $("goalAway");
+  const analyseGoals = $("analyseGoals");
 
   if (!teamSelect || !homeSelect || !awaySelect || !analyseButton) {
     throw new Error(
@@ -737,6 +740,15 @@ function populateTeamSelectors(teams) {
     cornerHome.disabled = teams.length < 2;
     cornerAway.disabled = teams.length < 2;
     if (analyseCorners) analyseCorners.disabled = teams.length < 2;
+  }
+
+  if (goalHome && goalAway) {
+    goalHome.innerHTML = options;
+    goalAway.innerHTML = options;
+    if (teams.length > 1) goalAway.selectedIndex = 1;
+    goalHome.disabled = teams.length < 2;
+    goalAway.disabled = teams.length < 2;
+    if (analyseGoals) analyseGoals.disabled = teams.length < 2;
   }
 
   if (teams.length > 1) {
