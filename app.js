@@ -69,7 +69,7 @@ function getValue(obj, names) {
 
 function numberValue(value) {
   if (value === null || value === undefined) return null;
-  const cleaned = String(value).trim().replace(/\\s/g, "").replace(",", ".");
+  const cleaned = String(value).trim().replace(/\s/g, "").replace(",", ".");
   if (!cleaned) return null;
   const n = Number(cleaned);
   return Number.isFinite(n) ? n : null;
@@ -427,8 +427,8 @@ function renderCornerPrediction() {
 
 function expectedHT1X2(home, away) {
   const rows = matches.filter(m => m.htHomeGoals !== null && m.htAwayGoals !== null);
-  const homeRows = rows.filter(m => m.home === home).slice(-10);
-  const awayRows = rows.filter(m => m.away === away).slice(-10);
+  const homeRows = recentTeamGames(home, "home", 10).filter(m => m.htHomeGoals !== null && m.htAwayGoals !== null);
+  const awayRows = recentTeamGames(away, "away", 10).filter(m => m.htHomeGoals !== null && m.htAwayGoals !== null);
   if (homeRows.length < 2 || awayRows.length < 2) return { available:false, count: rows.length, homeN:homeRows.length, awayN:awayRows.length };
   const avg = arr => arr.reduce((s,v)=>s+v,0)/arr.length;
   const leagueHome = avg(rows.map(m=>m.htHomeGoals));
@@ -464,11 +464,12 @@ function renderCornersHT() {
  if(!el) return;
  if(!home||!away){el.innerHTML="<p>Seleciona as equipas acima para calcular a previsão de cantos ao intervalo.</p>";return;}
  const rows=matches.filter(m=>m.htHomeCorners!==null&&m.htAwayCorners!==null);
- const hr=rows.filter(m=>m.home===home).slice(-10), ar=rows.filter(m=>m.away===away).slice(-10);
+ const hr=recentTeamGames(home, "home", 10).filter(m=>m.htHomeCorners!==null&&m.htAwayCorners!==null);
+ const ar=recentTeamGames(away, "away", 10).filter(m=>m.htHomeCorners!==null&&m.htAwayCorners!==null);
  if(hr.length<2||ar.length<2){el.innerHTML=`<p>Não há dados históricos suficientes de cantos ao intervalo nesta competição/época.</p><p class="muted">A fonte tem ${rows.length} jogos com cantos HT; amostra para ${esc(home)}: ${hr.length}, para ${esc(away)}: ${ar.length}. Não será usada a média dos 90 minutos como se fosse dado HT.</p>`;return;}
  const avg=a=>a.reduce((s,v)=>s+v,0)/a.length;
- const h=avg([...hr.map(m=>m.htHomeCorners),...ar.map(m=>m.htAwayCorners)]);
- const a=avg([...ar.map(m=>m.htAwayCorners),...hr.map(m=>m.htHomeCorners)]);
+ const h=(avg(hr.map(m=>m.htHomeCorners))+avg(ar.map(m=>m.htHomeCorners)))/2;
+ const a=(avg(ar.map(m=>m.htAwayCorners))+avg(hr.map(m=>m.htAwayCorners)))/2;
  const total=Math.max(.1,h+a);
  const lines=[2.5,3.5,4.5,5.5,6.5];
  el.innerHTML=`<h3>${esc(home)} vs. ${esc(away)} — cantos ao intervalo</h3><div class="stats"><div class="stat"><span>Cantos esperados — casa HT</span><strong>${fmt(h,2)}</strong></div><div class="stat"><span>Cantos esperados — visitante HT</span><strong>${fmt(a,2)}</strong></div><div class="stat"><span>Total esperado HT</span><strong>${fmt(total,2)}</strong></div></div>
