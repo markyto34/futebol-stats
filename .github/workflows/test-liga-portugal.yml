@@ -1,0 +1,55 @@
+name: Testar jogos da Liga Portugal na API-Football
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  portugal-fixtures:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Consultar jogos da Liga Portugal sem expor a chave
+        env:
+          API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
+        run: |
+          set -euo pipefail
+          if [ -z "${API_FOOTBALL_KEY:-}" ]; then
+            echo "::error::O secret API_FOOTBALL_KEY não está configurado."
+            exit 1
+          fi
+
+          response=$(curl --silent --show-error --fail-with-body \
+            --max-time 20 \
+            --header "x-apisports-key: ${API_FOOTBALL_KEY}" \
+            "https://v3.football.api-sports.io/fixtures?league=94&season=2026")
+
+          RESPONSE_JSON="$response" python -c '
+          import json, os, sys
+          data = json.loads(os.environ["RESPONSE_JSON"])
+          errors = data.get("errors")
+          if errors:
+              print("A API devolveu erros:", json.dumps(errors, ensure_ascii=False))
+              raise SystemExit(1)
+          fixtures = data.get("response", [])
+          print("Liga: Portugal - Primeira Liga (ID 94)")
+          print("Época consultada: 2026")
+          print("Jogos devolvidos:", len(fixtures))
+          if not fixtures:
+              print("A API não devolveu jogos para esta liga/época.")
+              raise SystemExit(2)
+          for item in fixtures[:3]:
+              fixture = item.get("fixture", {})
+              teams = item.get("teams", {})
+              goals = item.get("goals", {})
+              print(
+                  fixture.get("date", "data desconhecida"),
+                  "|", teams.get("home", {}).get("name", "?"),
+                  goals.get("home"), "-", goals.get("away"),
+                  teams.get("away", {}).get("name", "?"),
+                  "| estado:", fixture.get("status", {}).get("short", "?")
+              )
+          print("Teste de consulta de jogos concluído.")
+          '
