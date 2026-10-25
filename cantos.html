@@ -85,6 +85,22 @@
   </div>
 </section>
 
+
+<section class="panel" id="corner-prediction">
+  <h2 style="margin-top:0">Previsão de cantos</h2>
+  <p>Seleciona as equipas e calcula a média esperada de cantos e probabilidades estimadas para várias linhas.</p>
+  <div class="controls">
+    <div><label for="cornerHome">Equipa da casa</label><select id="cornerHome" disabled><option value="">Carrega os dados primeiro</option></select></div>
+    <div><label for="cornerAway">Equipa visitante</label><select id="cornerAway" disabled><option value="">Carrega os dados primeiro</option></select></div>
+  </div>
+  <div class="controls">
+    <div><label for="cornerOddsOver95">Odd Over 9,5 (opcional)</label><input id="cornerOddsOver95" type="number" min="1.01" step="0.01" placeholder="Ex.: 1.85"></div>
+    <div><label for="cornerOddsUnder95">Odd Under 9,5 (opcional)</label><input id="cornerOddsUnder95" type="number" min="1.01" step="0.01" placeholder="Ex.: 1.90"></div>
+  </div>
+  <p><button id="analyseCorners" disabled>Calcular previsão de cantos</button></p>
+  <div id="cornerResult" aria-live="polite"><p>Carrega os dados da competição para começar.</p></div>
+</section>
+
 <section id="fixtures-section">
   <h2>Próximos jogos e estimativas</h2>
   <div class="controls">
@@ -125,6 +141,6 @@
 <p><small>Fonte: <a href="https://github.com/oladeeayo/open-matchday" target="_blank" rel="noopener">open-matchday</a>. As estimativas são estatísticas históricas, não garantias. A disponibilidade dos dados depende da competição e época selecionadas.</small></p>
 </main>
 
-<script src="app.js?v=20261025fix1" defer></script>
+<script src="app.js?v=20261025pred1" defer></script>
 </body>
 </html>
