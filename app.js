@@ -786,6 +786,14 @@ async function loadGames() {
       );
     }
 
+    // Data de última alteração indicada pelos cabeçalhos HTTP do ficheiro CSV.
+    const lastModified = response.headers.get("Last-Modified");
+    const csvUpdatedAt = lastModified && !Number.isNaN(Date.parse(lastModified))
+      ? new Date(lastModified).toLocaleString("pt-PT", {
+          dateStyle: "short", timeStyle: "short", timeZone: "Europe/Lisbon"
+        })
+      : null;
+
     const csv = await response.text();
     matches = parseCSV(csv).map(normalizeResult).filter(Boolean);
 
@@ -801,7 +809,7 @@ async function loadGames() {
     populateTeamSelectors(teams);
 
     $("status").textContent =
-      `${matches.length} resultados carregados; ${teams.length} equipas encontradas. Já podes escolher as equipas na previsão 1X2.`;
+      `${matches.length} resultados carregados; ${teams.length} equipas encontradas. ${csvUpdatedAt ? "Última alteração do CSV no GitHub: " + csvUpdatedAt + ". " : "A fonte não disponibilizou a data de alteração deste CSV. "}Já podes escolher as equipas para a análise.`;
 
     try {
       const fixtureResponse =
