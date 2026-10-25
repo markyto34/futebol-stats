@@ -839,7 +839,7 @@ async function loadGames() {
 
     $("stats").innerHTML = "";
     $("venueStats").innerHTML =
-      '<tr><td colspan="6">Sem dados disponíveis.</td></tr>';
+      '<tr><td colspan="7">Sem dados disponíveis.</td></tr>';
     $("recent").innerHTML =
       '<tr><td colspan="6">Sem dados disponíveis.</td></tr>';
     $("fixtures").innerHTML = "";
