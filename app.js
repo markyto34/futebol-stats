@@ -26,8 +26,7 @@ function parseCSV(text) {
       else if (c === ",") {
         row.push(field);
         field = "";
-      } else if (c === "
-") {
+      } else if (c === "\n") {
         row.push(field);
         rows.push(row);
         row = [];
@@ -348,7 +347,6 @@ function calculate1X2(home, away) {
   const expected = expectedGoalsForMatch(home, away);
   if (!expected) return null;
   let pHome = 0, pDraw = 0, pAway = 0;
-  // Somatório de resultados de 0 a 10 golos por equipa.
   for (let h = 0; h <= 10; h++) {
     for (let a = 0; a <= 10; a++) {
       const p = poissonProbability(h, expected.lambdaHome) *
@@ -619,6 +617,16 @@ function populateTeamSelectors(teams) {
   teamSelect.innerHTML = options;
   homeSelect.innerHTML = options;
   awaySelect.innerHTML = options;
+  const x12Home = $("x12Home");
+  const x12Away = $("x12Away");
+  if (x12Home && x12Away) {
+    x12Home.innerHTML = options;
+    x12Away.innerHTML = options;
+    if (teams.length > 1) x12Away.selectedIndex = 1;
+    x12Home.disabled = teams.length < 2;
+    x12Away.disabled = teams.length < 2;
+    $("analyseX12").disabled = teams.length < 2;
+  }
 
   if (teams.length > 1) {
     awaySelect.selectedIndex = 1;
