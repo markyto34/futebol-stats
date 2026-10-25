@@ -19,7 +19,7 @@ A última revisão deste documento encontrou conteúdo antigo que ainda descrevi
 - O próprio projeto contém documentação sobre inspeção de ficheiros CSV.
 - A existência de testes automáticos e de uma publicação bem-sucedida não prova, por si só, que todas as interações funcionam no navegador nem que as previsões estão bem calibradas.
 
-## Problemas que exigem validação ou correção
+## Alteração de política de amostras (25/10/2026)\n\nPara reduzir `N/D` evitáveis, as previsões de golos, 1X2 HT e cantos FT/HT passam a aceitar pelo menos um jogo válido por equipa, quando a fórmula consegue ser calculada. Amostras inferiores a três jogos são assinaladas como pequenas. Isto aumenta a cobertura, mas não torna as estimativas de amostras mínimas fiáveis; os modelos continuam a precisar de backtesting cronológico. A previsão continua indisponível quando faltam os campos necessários ou não existe uma referência estatística calculável.\n\n## Problemas que exigem validação ou correção
 
 ### P0 — Integridade das previsões
 
@@ -34,7 +34,7 @@ A última revisão deste documento encontrou conteúdo antigo que ainda descrevi
 6. **Validar CSVs reais.** Testar cabeçalhos, campos vazios, delimitadores, números em falta, datas inválidas, equipas com nomes alternativos e linhas duplicadas. Manter amostras fixas de CSV para testes de regressão.
 7. **Separar resultados históricos de fixtures futuros.** Um jogo sem resultado não deve entrar em médias ou backtests; um campo vazio não deve ser convertido silenciosamente em zero.
 8. **Cache e falhas de rede.** Informar quando a fonte falha e quando são apresentados dados em cache. Uma cache antiga não deve ser confundida com dados acabados de atualizar.
-9. **Cobertura variável.** Antes de calcular previsões, mostrar a competição, época, intervalo temporal e quantidade de jogos válidos. Se a amostra for pequena, avisar ou impedir a previsão.
+9. **Cobertura variável.** Antes de calcular previsões, mostrar a competição, época, intervalo temporal e quantidade de jogos válidos. Se a amostra for pequena, apresentar a estimativa com aviso explícito; impedir apenas quando não existir pelo menos um registo válido para a métrica.
 10. **Proteção contra dados externos malformados.** Validar valores numéricos e datas antes de calcular; não confiar cegamente em conteúdo vindo de CSV.
 
 ### P1 — Interface e funcionamento
