@@ -20,5 +20,7 @@ jobs:
           node --check app.js
           node --check golos.js
           node --check scripts/backtest.cjs
+          node --check scripts/data-audit.cjs
+          node --check scripts/audit-open-matchday.cjs
       - name: Run model and data tests
         run: node --test tests/*.test.cjs
