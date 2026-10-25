@@ -490,16 +490,23 @@ function expectedHT1X2(home, away) {
   const rows = matches.filter(m => m.htHomeGoals !== null && m.htAwayGoals !== null);
   const homeRows = recentTeamGames(home, "home", 10).filter(m => m.htHomeGoals !== null && m.htAwayGoals !== null);
   const awayRows = recentTeamGames(away, "away", 10).filter(m => m.htHomeGoals !== null && m.htAwayGoals !== null);
-  if (homeRows.length < 2 || awayRows.length < 2) return { available:false, count: rows.length, homeN:homeRows.length, awayN:awayRows.length };
-  const avg = arr => arr.reduce((s,v)=>s+v,0)/arr.length;
+  if (homeRows.length < 2 || awayRows.length < 2 || rows.length === 0) {
+    return { available:false, count:rows.length, homeN:homeRows.length, awayN:awayRows.length };
+  }
+
+  const avg = arr => arr.length ? arr.reduce((s,v)=>s+v,0)/arr.length : null;
   const leagueHome = avg(rows.map(m=>m.htHomeGoals));
   const leagueAway = avg(rows.map(m=>m.htAwayGoals));
-  const homeAttack = avg(homeRows.map(m=>m.htHomeGoals));
-  const homeConcede = avg(homeRows.map(m=>m.htAwayGoals));
-  const awayAttack = avg(awayRows.map(m=>m.htAwayGoals));
-  const awayConcede = avg(awayRows.map(m=>m.htHomeGoals));
-  const lh = Math.max(0.05, avg([homeAttack, awayConcede, leagueHome]));
-  const la = Math.max(0.05, avg([awayAttack, homeConcede, leagueAway]));
+
+  // Aplicar a mesma regularização (prior=5) usada no modelo FT:
+  // amostras pequenas aproximam-se da média da competição ao intervalo.
+  const homeAttack = shrinkAverage(avg(homeRows.map(m=>m.htHomeGoals)), homeRows.length, leagueHome);
+  const homeConcede = shrinkAverage(avg(homeRows.map(m=>m.htAwayGoals)), homeRows.length, leagueAway);
+  const awayAttack = shrinkAverage(avg(awayRows.map(m=>m.htAwayGoals)), awayRows.length, leagueAway);
+  const awayConcede = shrinkAverage(avg(awayRows.map(m=>m.htHomeGoals)), awayRows.length, leagueHome);
+
+  const lh = Math.max(0.05, (homeAttack + awayConcede) / 2);
+  const la = Math.max(0.05, (awayAttack + homeConcede) / 2);
   let h=0,d=0,a=0;
   for(let i=0;i<=8;i++) for(let j=0;j<=8;j++){
     const q=poissonProbability(i,lh)*poissonProbability(j,la);
