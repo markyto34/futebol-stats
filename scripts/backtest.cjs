@@ -103,28 +103,39 @@ if(games.length < minHistory+1) {
  process.exit(2);
 }
 const history=[], goalErrors=[], briers=[], outcomes=[], cornerErrors=[], cornerOver=[];
-for(const g of games) {
- if(history.length>=minHistory) {
-   const pred=predict(history,g);
-   if(pred) {
-     goalErrors.push(Math.abs(pred.lh-g.hg),Math.abs(pred.la-g.ag));
-     const actual=g.hg>g.ag?0:g.hg===g.ag?1:2;
-     briers.push(pred.p.reduce((sum,p,i)=>sum+(p-(i===actual?1:0))**2,0));
-     outcomes.push(pred.p.indexOf(Math.max(...pred.p))===actual);
-   }
-   if(g.hc!==null && g.ac!==null) {
-     const hs=history.filter(m=>m.hc!==null&&m.ac!==null);
-     const home=hs.filter(m=>m.home===g.home).slice(-10);
-     const away=hs.filter(m=>m.away===g.away).slice(-10);
-     if(home.length>=3&&away.length>=3) {
-       const eh=avg(home.map(m=>m.hc)), ea=avg(away.map(m=>m.ac));
-       const expected=eh+ea, actual=g.hc+g.ac;
-       cornerErrors.push(Math.abs(expected-actual));
-       cornerOver.push((expected>8.5)===(actual>8.5));
-     }
-   }
- }
- history.push(g);
+let index = 0;
+while (index < games.length) {
+  // All matches on the same date are predicted from the same pre-date history.
+  // This prevents results from earlier rows on that date leaking into later predictions.
+  const date = games[index].date;
+  let end = index + 1;
+  while (end < games.length && games[end].date === date) end++;
+
+  const dayGames = games.slice(index, end);
+  if (history.length >= minHistory) {
+    for (const g of dayGames) {
+      const pred = predict(history, g);
+      if (pred) {
+        goalErrors.push(Math.abs(pred.lh-g.hg), Math.abs(pred.la-g.ag));
+        const actual = g.hg > g.ag ? 0 : g.hg === g.ag ? 1 : 2;
+        briers.push(pred.p.reduce((sum,p,i) => sum + (p-(i===actual?1:0))**2, 0));
+        outcomes.push(pred.p.indexOf(Math.max(...pred.p)) === actual);
+      }
+      if (g.hc !== null && g.ac !== null) {
+        const hs = history.filter(m => m.hc !== null && m.ac !== null);
+        const home = hs.filter(m => m.home === g.home).slice(-10);
+        const away = hs.filter(m => m.away === g.away).slice(-10);
+        if (home.length >= 3 && away.length >= 3) {
+          const eh = avg(home.map(m => m.hc)), ea = avg(away.map(m => m.ac));
+          const expected = eh + ea, actual = g.hc + g.ac;
+          cornerErrors.push(Math.abs(expected-actual));
+          cornerOver.push((expected > 8.5) === (actual > 8.5));
+        }
+      }
+    }
+  }
+  history.push(...dayGames);
+  index = end;
 }
 function metric(label,x,dp=3){return x.length ? `${label}: ${avg(x).toFixed(dp)} (n=${x.length})` : `${label}: sem amostra suficiente`;}
 console.log("BACKTEST CRONOLÓGICO — sem informação futura");
