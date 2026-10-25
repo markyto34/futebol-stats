@@ -55,8 +55,8 @@ function json(data, status, origin) {
 
 function apiSeason(value) {
   // Site season labels such as 2627 mean the season starting in 2026.
-  if (/^\d{4}$/.test(value || "")) return Number(value.slice(0, 2)) + 2000;
   if (/^20\d{2}$/.test(value || "")) return Number(value);
+  if (/^\d{4}$/.test(value || "")) return Number(value.slice(0, 2)) + 2000;
   return null;
 }
 
