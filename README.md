@@ -71,10 +71,12 @@ Os testes atuais cobrem funções de parsing/normalização e fórmulas básicas
 
 ### Backtesting cronológico (experimental)
 
-Foi acrescentado um script walk-forward que só usa jogos anteriores para prever cada jogo seguinte. Descarrega/obtém um CSV de resultados compatível com o formato usado pela aplicação e executa:
+Foi acrescentado um script walk-forward que só usa jogos de datas anteriores para prever os jogos seguintes. Todos os jogos da mesma data são previstos antes de os resultados desse dia entrarem no histórico, evitando fuga de informação entre partidas do mesmo dia. Descarrega/obtém um CSV de resultados compatível com o formato usado pela aplicação e executa:
 
 ```bash
 node scripts/backtest.cjs caminho/para/results.csv --min-history=30
+# ou diretamente a partir de um URL público
+node scripts/backtest.cjs https://raw.githubusercontent.com/oladeeayo/open-matchday/master/data/POR_1_primeira-liga/results_2627.csv --min-history=30
 ```
 
 Métricas: erro absoluto médio (MAE) dos golos por equipa, Brier score 1X2, acerto do resultado mais provável e, quando existem dados de cantos suficientes, MAE do total de cantos e acerto da classificação Over 8.5. O script não calcula ROI porque o CSV não contém odds históricas. O teste de cantos é uma referência simples, não uma reprodução do modelo de cantos da interface. Usar várias épocas e comparar com baselines antes de tirar conclusões.
