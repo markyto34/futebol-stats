@@ -80,3 +80,15 @@ node scripts/backtest.cjs https://raw.githubusercontent.com/oladeeayo/open-match
 ```
 
 Métricas: MAE dos golos por equipa, Brier score 1X2, acerto do resultado mais provável, MAE dos cantos da equipa da casa e visitante, MAE do total de cantos e acerto separado para Over 8.5, 9.5 e 10.5. O relatório compara com um baseline simples de médias/frequências históricas da liga. As métricas do modelo e do baseline usam as mesmas observações elegíveis para cada comparação. MAE e Brier mais baixos são melhores; acerto mais alto é melhor. O script não calcula ROI porque o CSV não contém odds históricas. O modelo de cantos continua a ser uma referência simples, não uma reprodução do modelo de cantos da interface. Usar várias épocas e amostras comparáveis antes de tirar conclusões.
+
+### Auditoria de cobertura dos dados
+
+Para verificar quantos campos estão preenchidos num CSV antes de o usar num backtest:
+
+```bash
+node scripts/data-audit.cjs caminho/para/results.csv
+# Data de referência explícita para separar resultados de possíveis jogos futuros:
+node scripts/data-audit.cjs caminho/para/results.csv --as-of=2026-10-25
+```
+
+O relatório indica o intervalo de datas, cobertura de resultados FT, cantos FT, golos HT e cantos HT, linhas sem data/resultado, possíveis fixtures futuros e duplicados por data/equipas. A auditoria descreve apenas o ficheiro analisado: não garante que a fonte contenha todos os jogos da competição nem que os dados estejam atualizados.
