@@ -464,37 +464,11 @@ function calculateCornerPrediction(home, away) {
 }
 
 function renderCornerPrediction() {
-  const result = $("cornerResult");
-  const home = $("cornerHome")?.value;
-  const away = $("cornerAway")?.value;
-  if (!result || !home || !away) return;
-  if (home === away) { result.innerHTML = "<p>Escolhe duas equipas diferentes.</p>"; return; }
-  const p = calculateCornerPrediction(home, away);
-  if (!p) { result.innerHTML = "<p>Não existem dados de cantos suficientes para esta previsão.</p>"; return; }
-  if (p.insufficientSample) {
-    result.innerHTML = `<p>Não vou apresentar uma previsão de cantos com uma amostra tão pequena.</p><p class="muted">Jogos com cantos completos: ${esc(home)} em casa — ${p.homeCornerSample}; ${esc(away)} fora — ${p.awayCornerSample}. São necessários pelo menos 3 jogos válidos por equipa. Os registos em falta não são tratados como zero.</p>`;
-    return;
-  }
-  const oddOver = Number($("cornerOddsOver95")?.value);
-  const oddUnder = Number($("cornerOddsUnder95")?.value);
-  const over = p.probabilities.find(x => x.line === 9.5).over;
-  let market = "<p class=\"muted\">Introduz as odds Over e Under 9,5 para comparar o mercado com o modelo.</p>";
-  if (oddOver > 1 && oddUnder > 1) {
-    const impliedOver = 1 / oddOver, impliedUnder = 1 / oddUnder;
-    const normOver = impliedOver / (impliedOver + impliedUnder);
-    const edge = over * oddOver - 1;
-    market = `<h3>Comparação Over/Under 9,5</h3><p>Probabilidade de mercado normalizada: ${fmt(normOver*100)}% Over. Modelo: ${fmt(over*100)}%. Odd justa Over: ${fmt(1/over,2)}; odd justa Under: ${fmt(1/(1-over),2)}.</p><p>Diferença matemática modelo × odd: ${fmt(edge*100)}%. Não é garantia de valor real.</p>`;
-  }
-  result.innerHTML = `<h3>${esc(home)} vs. ${esc(away)}</h3>
-  <div class="stats">
-    <div class="stat"><span>Cantos esperados — casa</span><strong>${fmt(p.homeCornerMean,2)}</strong></div>
-    <div class="stat"><span>Cantos esperados — fora</span><strong>${fmt(p.awayCornerMean,2)}</strong></div>
-    <div class="stat"><span>Total esperado</span><strong>${fmt(p.total,2)}</strong></div>
-  </div>
-  <div class="tablewrap"><table><thead><tr><th>Linha</th><th>Prob. Over estimada</th><th>Odd justa Over</th><th>Prob. Under estimada</th><th>Odd justa Under</th></tr></thead><tbody>
-  ${p.probabilities.map(x => `<tr><td>${x.line.toString().replace(".",",")}</td><td>${fmt(x.over*100)}%</td><td>${fmt(1/x.over,2)}</td><td>${fmt((1-x.over)*100)}%</td><td>${fmt(1/(1-x.over),2)}</td></tr>`).join("")}
-  </tbody></table></div>${market}
-  <p class="muted">Amostra de cantos com dados completos: ${p.homeCornerSample} jogos da equipa da casa (em casa) + ${p.awayCornerSample} jogos da visitante (fora), máximo 10 por equipa; total de registos usados nas médias: ${p.cornerGames}. Os jogos sem dados completos de cantos ficam excluídos destas médias. Modelo Poisson simples; não considera árbitro, onzes, contexto tático ou estado do marcador e não foi validado retrospetivamente.</p>`;
+ const result=$("cornerResult"),home=$("cornerHome")?.value,away=$("cornerAway")?.value;if(!result||!home||!away)return;
+ if(home===away){result.innerHTML="<p>Escolhe duas equipas diferentes.</p>";return;}const p=calculateCornerPrediction(home,away);
+ if(!p){result.innerHTML="<p>Não existem dados de cantos suficientes.</p>";return;}
+ if(p.insufficientSample){result.innerHTML=`<p>A amostra é demasiado pequena para uma previsão fiável.</p><p class="muted">${esc(home)} em casa: ${p.homeCornerSample}; ${esc(away)} fora: ${p.awayCornerSample}. São necessários pelo menos 3 jogos válidos por equipa.</p>`;return;}
+ result.innerHTML=`<h3>${esc(home)} vs. ${esc(away)}</h3><div class="stats"><div class="stat"><span>Cantos esperados — casa</span><strong>${fmt(p.homeCornerMean,2)}</strong></div><div class="stat"><span>Cantos esperados — fora</span><strong>${fmt(p.awayCornerMean,2)}</strong></div><div class="stat"><span>Total esperado</span><strong>${fmt(p.total,2)}</strong></div></div><div class="tablewrap"><table><thead><tr><th>Linha</th><th>Prob. Over estimada</th><th>Prob. Under estimada</th></tr></thead><tbody>${p.probabilities.map(x=>`<tr><td>${x.line.toString().replace(".",",")}</td><td>${fmt(x.over*100)}%</td><td>${fmt((1-x.over)*100)}%</td></tr>`).join("")}</tbody></table></div><p class="muted">Amostra: ${p.homeCornerSample} jogos em casa e ${p.awayCornerSample} fora; modelo Poisson não validado retrospetivamente.</p>`;
 }
 
 function expectedHT1X2(home, away) {
@@ -526,209 +500,31 @@ function expectedHT1X2(home, away) {
   const total=h+d+a;
   return {available:true,home:h/total,draw:d/total,away:a/total,lh,la,homeN:homeRows.length,awayN:awayRows.length,count:rows.length};
 }
-function renderX12HTMarket() {
- const el=$("x12HtMarketResult");
- if(!el) return;
- const raw=["x12HtOddsHome","x12HtOddsDraw","x12HtOddsAway"].map(id=>String($(id)?.value??"").trim());
- const odds=raw.map(numberValue);
- if(!odds.every(o=>o!==null&&o>1)){el.innerHTML="<p class='muted'>Introduz três odds HT válidas, todas superiores a 1.</p>";return;}
- const implied=odds.map(o=>1/o), total=implied.reduce((s,v)=>s+v,0), probs=implied.map(v=>v/total);
- el.innerHTML=`<h3>Probabilidades implícitas das odds HT</h3><div class="tablewrap"><table><thead><tr><th>Resultado</th><th>Odd inserida</th><th>Prob. bruta</th><th>Prob. sem margem</th><th>Odd justa de mercado</th></tr></thead><tbody>${["Casa HT (1)","Empate HT (X)","Visitante HT (2)"].map((label,i)=>`<tr><td>${label}</td><td>${fmt(odds[i],2)}</td><td>${fmt(implied[i]*100)}%</td><td><strong>${fmt(probs[i]*100)}%</strong></td><td>${fmt(1/probs[i],2)}</td></tr>`).join("")}</tbody></table></div><p>Margem teórica aproximada: ${fmt((total-1)*100)}%.</p><p class="muted">Calculado apenas a partir das odds que inseriste; não é uma previsão independente.</p>`;
+function renderX12HT() {
+ const el=$("x12HtResult"),home=$("x12Home")?.value,away=$("x12Away")?.value;if(!el)return;if(!home||!away){el.innerHTML="<p>Seleciona as equipas para calcular a previsão 1X2 ao intervalo.</p>";return;}
+ const p=expectedHT1X2(home,away);if(!p.available){el.innerHTML=`<p>Não há dados HT suficientes para esta previsão.</p><p class="muted">Registos HT: ${p.count}. Amostra: ${esc(home)} (${p.homeN}) e ${esc(away)} (${p.awayN}).</p>`;return;}
+ el.innerHTML=`<h3>${esc(home)} vs. ${esc(away)} — ao intervalo</h3><div class="stats"><div class="stat"><span>Casa (1 HT)</span><strong>${fmt(p.home*100)}%</strong></div><div class="stat"><span>Empate (X HT)</span><strong>${fmt(p.draw*100)}%</strong></div><div class="stat"><span>Visitante (2 HT)</span><strong>${fmt(p.away*100)}%</strong></div></div><p>Golos HT esperados: casa ${fmt(p.lh,2)} — visitante ${fmt(p.la,2)}. Amostra: ${p.homeN} jogos em casa e ${p.awayN} fora.</p><p class="muted">Estimativa histórica não validada retrospetivamente.</p>`;
 }
 
-function renderX12HT() {
- const el=$("x12HtResult"), home=$("x12Home")?.value, away=$("x12Away")?.value;
- if(!el) return;
- if(!home||!away){el.innerHTML="<p>Seleciona as equipas acima para calcular a previsão 1X2 ao intervalo.</p>";return;}
- const p=expectedHT1X2(home,away);
- if(!p.available){el.innerHTML=`<p>Não há dados HT suficientes para esta previsão nesta competição/época.</p><p class="muted">Registos com resultado ao intervalo: ${p.count}. Amostra encontrada: ${esc(home)} (${p.homeN}) e ${esc(away)} (${p.awayN}).</p>`;return;}
- el.innerHTML=`<h3>${esc(home)} vs. ${esc(away)} — ao intervalo</h3><div class="stats">
- <div class="stat"><span>Casa (1 HT)</span><strong>${fmt(p.home*100)}%</strong><span>Odd justa: ${fmt(1/p.home,2)}</span></div>
- <div class="stat"><span>Empate (X HT)</span><strong>${fmt(p.draw*100)}%</strong><span>Odd justa: ${fmt(1/p.draw,2)}</span></div>
- <div class="stat"><span>Visitante (2 HT)</span><strong>${fmt(p.away*100)}%</strong><span>Odd justa: ${fmt(1/p.away,2)}</span></div></div>
- <p>Golos HT esperados: casa ${fmt(p.lh,2)} — visitante ${fmt(p.la,2)}. Amostra: ${p.homeN} jogos em casa e ${p.awayN} fora.</p><p class="muted">Estimativa Poisson com resultados HT históricos disponíveis; não é garantia e não foi validada retrospetivamente.</p>`;
-}
 function renderCornersHT() {
- const el=$("cornerHtResult"), home=$("cornerHome")?.value, away=$("cornerAway")?.value;
- if(!el) return;
- if(!home||!away){el.innerHTML="<p>Seleciona as equipas acima para calcular a previsão de cantos ao intervalo.</p>";return;}
- const rows=matches.filter(m=>m.htHomeCorners!==null&&m.htAwayCorners!==null);
- const hr=recentTeamGames(home, "home", 10).filter(m=>m.htHomeCorners!==null&&m.htAwayCorners!==null);
- const ar=recentTeamGames(away, "away", 10).filter(m=>m.htHomeCorners!==null&&m.htAwayCorners!==null);
- if(hr.length<3||ar.length<3){el.innerHTML=`<p>Não há dados históricos suficientes de cantos ao intervalo nesta competição/época.</p><p class="muted">A fonte tem ${rows.length} jogos com cantos HT; amostra para ${esc(home)}: ${hr.length}, para ${esc(away)}: ${ar.length}. São necessários pelo menos 3 jogos válidos por equipa. Não será usada a média dos 90 minutos como se fosse dado HT.</p>`;return;}
- if (hr.length < 5 || ar.length < 5 || rows.length < 20) {el.innerHTML=`<p>Não há dados suficientes para uma previsão fiável de cantos HT.</p><p class="muted">Amostra válida HT: ${rows.length} jogos na competição; ${esc(home)} tem ${hr.length} jogos em casa e ${esc(away)} tem ${ar.length} fora. São necessários pelo menos 5 jogos válidos por equipa e 20 na competição. Não serão calculadas odds justas com uma amostra tão curta.</p>`;return;}
- const avg=a=>a.reduce((s,v)=>s+v,0)/a.length;
- const h=(avg(hr.map(m=>m.htHomeCorners))+avg(ar.map(m=>m.htHomeCorners)))/2;
- const a=(avg(ar.map(m=>m.htAwayCorners))+avg(hr.map(m=>m.htAwayCorners)))/2;
- const total=Math.max(.1,h+a);
- const lines=[2.5,3.5,4.5,5.5,6.5];
- el.innerHTML=`<h3>${esc(home)} vs. ${esc(away)} — cantos ao intervalo</h3><div class="stats"><div class="stat"><span>Cantos esperados — casa HT</span><strong>${fmt(h,2)}</strong></div><div class="stat"><span>Cantos esperados — visitante HT</span><strong>${fmt(a,2)}</strong></div><div class="stat"><span>Total esperado HT</span><strong>${fmt(total,2)}</strong></div></div>
- <div class="tablewrap"><table><thead><tr><th>Linha</th><th>Over estimado</th><th>Odd justa Over</th><th>Under estimado</th><th>Odd justa Under</th></tr></thead><tbody>${lines.map(line=>{const over=poissonOverLine(total,line);return `<tr><td>${String(line).replace(".",",")}</td><td>${fmt(over*100)}%</td><td>${fmt(1/over,2)}</td><td>${fmt((1-over)*100)}%</td><td>${fmt(1/(1-over),2)}</td></tr>`}).join("")}</tbody></table></div><p class="muted">Amostra HT: ${hr.length} jogos da equipa da casa e ${ar.length} da visitante. Estimativa simples, ainda não validada; amostras abaixo de 5 jogos têm elevada incerteza.</p>`;
+ const el=$("cornerHtResult"),home=$("cornerHome")?.value,away=$("cornerAway")?.value;if(!el)return;if(!home||!away){el.innerHTML="<p>Seleciona as equipas para a previsão de cantos ao intervalo.</p>";return;}
+ const rows=matches.filter(m=>m.htHomeCorners!==null&&m.htAwayCorners!==null),hr=recentTeamGames(home,"home",10).filter(m=>m.htHomeCorners!==null&&m.htAwayCorners!==null),ar=recentTeamGames(away,"away",10).filter(m=>m.htHomeCorners!==null&&m.htAwayCorners!==null);
+ if(hr.length<5||ar.length<5||rows.length<20){el.innerHTML=`<p>Não há dados suficientes para uma previsão fiável de cantos HT.</p><p class="muted">Registos válidos: ${rows.length}; ${esc(home)}: ${hr.length}; ${esc(away)}: ${ar.length}. São necessários 5 jogos por equipa e 20 na competição.</p>`;return;}
+ const avg=x=>x.reduce((s,v)=>s+v,0)/x.length,h=(avg(hr.map(m=>m.htHomeCorners))+avg(ar.map(m=>m.htHomeCorners)))/2,v=(avg(ar.map(m=>m.htAwayCorners))+avg(hr.map(m=>m.htAwayCorners)))/2,total=Math.max(.1,h+v),lines=[2.5,3.5,4.5,5.5,6.5];
+ el.innerHTML=`<h3>${esc(home)} vs. ${esc(away)} — cantos ao intervalo</h3><div class="stats"><div class="stat"><span>Cantos esperados casa HT</span><strong>${fmt(h,2)}</strong></div><div class="stat"><span>Cantos esperados visitante HT</span><strong>${fmt(v,2)}</strong></div><div class="stat"><span>Total esperado HT</span><strong>${fmt(total,2)}</strong></div></div><div class="tablewrap"><table><thead><tr><th>Linha</th><th>Prob. Over</th><th>Prob. Under</th></tr></thead><tbody>${lines.map(line=>{const over=poissonOverLine(total,line);return `<tr><td>${String(line).replace(".",",")}</td><td>${fmt(over*100)}%</td><td>${fmt((1-over)*100)}%</td></tr>`}).join("")}</tbody></table></div><p class="muted">Amostra HT: ${hr.length} jogos em casa e ${ar.length} fora. Modelo ainda não validado.</p>`;
 }
 function renderX12Analysis() {
-  const home = $("x12Home")?.value;
-  const away = $("x12Away")?.value;
-  const result = $("x12Result");
-  if (!home || !away || !result) return;
-  if (home === away) {
-    result.innerHTML = "<p>Escolhe duas equipas diferentes.</p>";
-    return;
-  }
-  let p;
-  try {
-    const selectedSample = $("x12Sample")?.value || "20";
-    p = calculate1X2(home, away, selectedSample === "all" ? "all" : Number(selectedSample));
-  } catch (error) {
-    console.error("Erro no cálculo 1X2:", error);
-    result.innerHTML = `<p>O cálculo 1X2 encontrou um erro: ${esc(error?.message || error)}. Tenta novamente e envia esta mensagem.</p>`;
-    return;
-  }
-  if (!p) {
-    const rawOdds = ["x12OddsHome", "x12OddsDraw", "x12OddsAway"].map(id => String($(id)?.value ?? "").trim());
-    const odds = rawOdds.map(numberValue);
-    const validMarket = odds.every(o => o !== null && o > 1);
-    if (validMarket) {
-      const implied = odds.map(o => 1 / o);
-      const total = implied.reduce((sum, v) => sum + v, 0);
-      const probs = implied.map(v => v / total);
-      result.innerHTML = `<h3>${esc(home)} vs. ${esc(away)}</h3>
-        <p>O modelo histórico não tem amostra suficiente, mas as odds pré-live que introduziste permitem calcular as probabilidades implícitas do mercado.</p>
-        <div class="tablewrap"><table><thead><tr><th>Resultado</th><th>Odd inserida</th><th>Prob. implícita bruta</th><th>Prob. mercado sem margem</th><th>Odd justa de mercado</th></tr></thead><tbody>
-        ${["Vitória casa (1)","Empate (X)","Vitória fora (2)"].map((label,i)=>`<tr><td>${label}</td><td>${fmt(odds[i],2)}</td><td>${fmt(implied[i]*100)}%</td><td><strong>${fmt(probs[i]*100)}%</strong></td><td>${fmt(1/probs[i],2)}</td></tr>`).join("")}
-        </tbody></table></div>
-        <p>Margem total aproximada do mercado: ${fmt((total-1)*100)}%. A probabilidade sem margem é calculada dividindo cada probabilidade implícita pela soma das três.</p>
-        <p class="muted">Isto é uma estimativa derivada das odds que inseriste, não uma previsão independente do resultado.</p>`;
-      return;
-    }
-    const league = leagueGoalAverages();
-    const selectedSample = $("x12Sample")?.value || "20";
-    const homeGames = recentTeamGames(home, "home", selectedSample === "all" ? "all" : Number(selectedSample));
-    const awayGames = recentTeamGames(away, "away", selectedSample === "all" ? "all" : Number(selectedSample));
-    const insufficientSample = homeGames.length < 5 || awayGames.length < 5;
-    result.innerHTML = `<p>Não foi possível calcular uma previsão histórica fiável. Podes, no entanto, inserir as três odds pré-live acima para obter as probabilidades implícitas do mercado, mesmo quando a amostra histórica é insuficiente.</p>
-      <p class="muted">Diagnóstico: ${esc(home)} — ${homeGames.length} jogos concluídos em casa; ${esc(away)} — ${awayGames.length} jogos concluídos fora. ${insufficientSample ? "Amostra insuficiente para o modelo histórico." : "Verifica os resultados disponíveis."} Médias da competição: casa ${fmt(league.home,2)} golos; visitante ${fmt(league.away,2)} golos.</p>`;
-    return;
-  }
-
-  const historical = [p.home, p.draw, p.away];
-  const labels = ["Vitória da casa (1)", "Empate (X)", "Vitória visitante (2)"];
-  const oddsIds = ["x12OddsHome", "x12OddsDraw", "x12OddsAway"];
-  const rawOdds = oddsIds.map(id => String($(id)?.value ?? "").trim());
-  const marketOdds = rawOdds.map(numberValue);
-  const hasMarket = marketOdds.every(o => o !== null && o > 1);
-  let comparisonHtml = "";
-  let finalProbs = historical;
-
-  if (hasMarket) {
-    const rawImplied = marketOdds.map(o => 1 / o);
-    const overround = rawImplied.reduce((sum, value) => sum + value, 0);
-    const market = rawImplied.map(value => value / overround);
-
-    // As probabilidades derivadas das odds inseridas ficam separadas do modelo histórico.
-    // Não misturamos automaticamente o mercado com o modelo sem calibração validada.
-    finalProbs = market;
-
-    const rows = labels.map((label, i) => {
-      const modelEdge = historical[i] * marketOdds[i] - 1;
-      const adjustedEdge = finalProbs[i] * marketOdds[i] - 1;
-      const difference = (finalProbs[i] - market[i]) * 100;
-      const signal = modelEdge > 0.02 ? "Modelo acima da odd de equilíbrio" :
-        modelEdge < -0.02 ? "Modelo abaixo da odd de equilíbrio" : "Modelo próximo do equilíbrio";
-      return `<tr><td>${label}</td><td>${fmt(marketOdds[i],2)}</td>
-        <td>${fmt(historical[i]*100)}%</td><td>${fmt(market[i]*100)}%</td>
-        <td><strong>${fmt(finalProbs[i]*100)}%</strong></td>
-        <td>${fmt(1/finalProbs[i],2)}</td><td>${difference > 0 ? "+" : ""}${fmt(difference)} p.p.</td>
-        <td>${signal}; edge histórico: ${modelEdge > 0 ? "+" : ""}${fmt(modelEdge*100)}%; edge ajustado: ${adjustedEdge > 0 ? "+" : ""}${fmt(adjustedEdge*100)}%</td></tr>`;
-    }).join("");
-
-    comparisonHtml = `
-      <h3>Fontes e probabilidades finais ajustadas</h3>
-      <p>Margem teórica da casa: ${fmt((overround - 1) * 100)}%. A probabilidade de mercado é normalizada para retirar essa margem.</p>
-      <p>Probabilidade final apresentada = probabilidade de mercado normalizada a partir das odds inseridas. O modelo histórico é mostrado separadamente e não altera esta probabilidade.</p>
-      <div class="tablewrap"><table><thead><tr><th>Resultado</th><th>Odd atual</th><th>Modelo histórico</th><th>Mercado sem margem</th><th>Prob. final ajustada</th><th>Odd justa final</th><th>Final − mercado</th><th>Edge do modelo vs. edge ajustado</th></tr></thead><tbody>${rows}</tbody></table></div>
-      <p class="muted">O indicador compara a probabilidade final com a odd introduzida. Não garante lucro nem prova que exista vantagem real; isso exige testar o modelo com resultados históricos.</p>`;
-  } else {
-    comparisonHtml = `<p class="muted">Para mostrar a tabela final, são necessárias três odds decimais válidas, todas superiores a 1. Os valores lidos agora foram: 1 = "${esc(rawOdds[0] || "vazio")}" (${marketOdds[0] === null ? "inválida" : fmt(marketOdds[0], 2)}); X = "${esc(rawOdds[1] || "vazio")}" (${marketOdds[1] === null ? "inválida" : fmt(marketOdds[1], 2)}); 2 = "${esc(rawOdds[2] || "vazio")}" (${marketOdds[2] === null ? "inválida" : fmt(marketOdds[2], 2)}). Usa, por exemplo, 2,10 / 3,30 / 3,60.</p>`;
-  }
-
-  result.innerHTML = `
-    <h3>${esc(home)} vs. ${esc(away)}</h3>
-    <div class="stats">
-      <div class="stat"><span>Modelo histórico — 1</span><strong>${fmt(historical[0]*100)}%</strong><span>Odd justa: ${fmt(1/historical[0],2)}</span></div>
-      <div class="stat"><span>Modelo histórico — X</span><strong>${fmt(historical[1]*100)}%</strong><span>Odd justa: ${fmt(1/historical[1],2)}</span></div>
-      <div class="stat"><span>Modelo histórico — 2</span><strong>${fmt(historical[2]*100)}%</strong><span>Odd justa: ${fmt(1/historical[2],2)}</span></div>
-    </div>
-    ${comparisonHtml}
-    <p>Golos esperados pelo modelo: casa ${fmt(p.lambdaHome,2)} — visitante ${fmt(p.lambdaAway,2)}. Amostra usada: ${p.homeSample} jogos da equipa da casa em casa e ${p.awaySample} da visitante fora.</p>
-    <p class="muted">O modelo histórico usa golos e distribuição de Poisson; não incorpora onzes, lesões, xG ou força individual detalhada e ainda não foi validado retrospetivamente.</p>
-  `;
+ const home=$("x12Home")?.value,away=$("x12Away")?.value,result=$("x12Result");if(!home||!away||!result)return;if(home===away){result.innerHTML="<p>Escolhe duas equipas diferentes.</p>";return;}
+ const sample=$("x12Sample")?.value||"20";let p;try{p=calculate1X2(home,away,sample==="all"?"all":Number(sample));}catch(e){result.innerHTML="<p>Erro ao calcular a previsão histórica. Tenta novamente.</p>";return;}
+ if(!p){const league=leagueGoalAverages(),hg=recentTeamGames(home,"home",sample==="all"?"all":Number(sample)),ag=recentTeamGames(away,"away",sample==="all"?"all":Number(sample));result.innerHTML=`<p>Não foi possível calcular uma previsão histórica fiável.</p><p class="muted">${esc(home)}: ${hg.length} jogos em casa; ${esc(away)}: ${ag.length} jogos fora. Médias da competição: casa ${fmt(league.home,2)}, visitante ${fmt(league.away,2)}.</p>`;return;}
+ const labels=["Vitória da casa (1)","Empate (X)","Vitória visitante (2)"],probs=[p.home,p.draw,p.away];result.innerHTML=`<h3>${esc(home)} vs. ${esc(away)}</h3><div class="stats">${labels.map((l,i)=>`<div class="stat"><span>${l}</span><strong>${fmt(probs[i]*100)}%</strong></div>`).join("")}</div><p>Golos esperados: casa ${fmt(p.lambdaHome,2)} — visitante ${fmt(p.lambdaAway,2)}. Amostra: ${p.homeSample} jogos em casa e ${p.awaySample} fora.</p><p class="muted">Modelo Poisson histórico não validado retrospetivamente.</p>`;
 }
 
 function renderBttsAnalysis() {
-  const homeSelect = $("bttsHome");
-  const awaySelect = $("bttsAway");
-  const result = $("bttsResult");
-
-  if (!homeSelect || !awaySelect || !result) {
-    $("status").textContent =
-      "Erro interno: falta um elemento do painel BTTS no HTML.";
-    return;
-  }
-
-  const home = homeSelect.value;
-  const away = awaySelect.value;
-
-  if (!home || !away) {
-    result.innerHTML = "<p>Seleciona as duas equipas.</p>";
-    return;
-  }
-
-  if (home === away) {
-    result.innerHTML = "<p>Escolhe duas equipas diferentes.</p>";
-    return;
-  }
-
-  const p = expectedGoalsForMatch(home, away);
-
-  if (!p) {
-    result.innerHTML = "<p>Não existem dados suficientes para calcular esta previsão.</p>";
-    return;
-  }
-
-  const yesPercent = p.bttsYes * 100;
-  const noPercent = p.bttsNo * 100;
-  const yesOdds = p.bttsYes > 0 ? 1 / p.bttsYes : null;
-  const noOdds = p.bttsNo > 0 ? 1 / p.bttsNo : null;
-  const marketYes = Number($("bttsOddsYes")?.value);
-  const marketNo = Number($("bttsOddsNo")?.value);
-  let marketHtml = "";
-  if (marketYes > 1 && marketNo > 1) {
-    const iy = 1 / marketYes, inn = 1 / marketNo;
-    const normYes = iy / (iy + inn);
-    const edge = p.bttsYes * marketYes - 1;
-    marketHtml = `<h3>Comparação com o mercado</h3><p>Probabilidade de mercado normalizada para Sim: ${fmt(normYes*100)}%. Modelo: ${fmt(yesPercent)}%. Diferença matemática modelo × odd Sim: ${fmt(edge*100)}%.</p>`;
-  } else {
-    marketHtml = "<p class=\"muted\">Introduz as odds Sim e Não para comparar com o mercado.</p>";
-  }
-
-  let reliability = "Amostra reduzida";
-  if (p.homeSample >= 8 && p.awaySample >= 8) reliability = "Amostra razoável";
-  if (p.homeSample >= 10 && p.awaySample >= 10) reliability = "10 jogos por equipa";
-
-  result.innerHTML = `
-    <h3>${esc(home)} vs. ${esc(away)}</h3>
-    <div class="stats">
-      <div class="stat"><span>Golos esperados — casa</span><strong>${fmt(p.lambdaHome, 2)}</strong></div>
-      <div class="stat"><span>Golos esperados — fora</span><strong>${fmt(p.lambdaAway, 2)}</strong></div>
-      <div class="stat"><span>Ambas Marcam — Sim</span><strong>${fmt(yesPercent)}%</strong></div>
-      <div class="stat"><span>Ambas Marcam — Não</span><strong>${fmt(noPercent)}%</strong></div>
-      <div class="stat"><span>Odd justa — Sim</span><strong>${fmt(yesOdds, 2)}</strong></div>
-      <div class="stat"><span>Odd justa — Não</span><strong>${fmt(noOdds, 2)}</strong></div>
-    </div>
-    ${marketHtml}
-    <p class="muted">${esc(reliability)}. Jogos considerados: ${p.homeSample} em casa e ${p.awaySample} fora.</p>
-    <p class="muted">Modelo inicial de Poisson ajustado às médias da competição. Assume independência entre os golos das equipas e ainda não foi validado retrospetivamente. Não considera xG, onzes, lesões ou força individual dos adversários.</p>
-  `;
+ const home=$("bttsHome")?.value,away=$("bttsAway")?.value,result=$("bttsResult");if(!result)return;if(!home||!away){result.innerHTML="<p>Seleciona as duas equipas.</p>";return;}if(home===away){result.innerHTML="<p>Escolhe duas equipas diferentes.</p>";return;}
+ const p=expectedGoalsForMatch(home,away);if(!p){result.innerHTML="<p>Não existem dados suficientes para calcular esta previsão.</p>";return;}
+ const reliability=p.homeSample>=10&&p.awaySample>=10?"10 jogos por equipa":p.homeSample>=8&&p.awaySample>=8?"Amostra razoável":"Amostra reduzida";
+ result.innerHTML=`<h3>${esc(home)} vs. ${esc(away)}</h3><div class="stats"><div class="stat"><span>Golos esperados casa</span><strong>${fmt(p.lambdaHome,2)}</strong></div><div class="stat"><span>Golos esperados fora</span><strong>${fmt(p.lambdaAway,2)}</strong></div><div class="stat"><span>Ambas Marcam — Sim</span><strong>${fmt(p.bttsYes*100)}%</strong></div><div class="stat"><span>Ambas Marcam — Não</span><strong>${fmt(p.bttsNo*100)}%</strong></div></div><p class="muted">${reliability}. Amostra: ${p.homeSample} jogos em casa e ${p.awaySample} fora. Modelo Poisson não validado retrospetivamente.</p>`;
 }
 
 function estimateMatch(home, away) {
@@ -863,7 +659,7 @@ function populateTeamSelectors(teams) {
   const homeSelect = $("bttsHome");
   const awaySelect = $("bttsAway");
   const analyseButton = $("analyseBtts");
-  $("calculateHtMarket")?.addEventListener("click", renderX12HTMarket);
+
   const cornerHome = $("cornerHome");
   const cornerAway = $("cornerAway");
   const analyseCorners = $("analyseCorners");
@@ -1101,13 +897,7 @@ if (missingIds.length) {
   if ($("analyseX12") && $("x12Home") && $("x12Away")) {
   $("analyseX12").addEventListener("click", renderX12Analysis);
   // Recalcula automaticamente quando qualquer odd é alterada, sem exigir novo clique.
-  ["x12OddsHome", "x12OddsDraw", "x12OddsAway"].forEach(id => {
-    const field = $(id);
-    if (field) {
-      field.addEventListener("input", renderX12Analysis);
-      field.addEventListener("change", renderX12Analysis);
-    }
-  });
+
   $("x12Home").addEventListener("change", () => {
     if ($("x12Home").value === $("x12Away").value) {
       const alt = [...$("x12Away").options].find(o => o.value !== $("x12Home").value);
