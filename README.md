@@ -68,3 +68,13 @@ node --test tests/*.test.cjs
 ```
 
 Os testes atuais cobrem funções de parsing/normalização e fórmulas básicas; não substituem testes no navegador nem um backtesting cronológico com resultados reais.
+
+### Backtesting cronológico (experimental)
+
+Foi acrescentado um script walk-forward que só usa jogos anteriores para prever cada jogo seguinte. Descarrega/obtém um CSV de resultados compatível com o formato usado pela aplicação e executa:
+
+```bash
+node scripts/backtest.cjs caminho/para/results.csv --min-history=30
+```
+
+Métricas: erro absoluto médio (MAE) dos golos por equipa, Brier score 1X2, acerto do resultado mais provável e, quando existem dados de cantos suficientes, MAE do total de cantos e acerto da classificação Over 8.5. O script não calcula ROI porque o CSV não contém odds históricas. O teste de cantos é uma referência simples, não uma reprodução do modelo de cantos da interface. Usar várias épocas e comparar com baselines antes de tirar conclusões.
