@@ -26,7 +26,8 @@ function parseCSV(text) {
       else if (c === ",") {
         row.push(field);
         field = "";
-      } else if (c === "\n") {
+      } else if (c === "
+") {
         row.push(field);
         rows.push(row);
         row = [];
@@ -731,7 +732,8 @@ const requiredIds = [
   "league", "season", "team", "period", "load",
   "status", "fixtureFilter", "fixtureStatus", "fixtures",
   "stats", "teamTitle", "venueStats", "recent",
-  "bttsHome", "bttsAway", "analyseBtts", "bttsResult",\n  "x12Home", "x12Away", "analyseX12", "x12Result", "x12OddsHome", "x12OddsDraw", "x12OddsAway"
+  "bttsHome", "bttsAway", "analyseBtts", "bttsResult",
+  "x12Home", "x12Away", "analyseX12", "x12Result", "x12OddsHome", "x12OddsDraw", "x12OddsAway"
 ];
 
 const missingIds = requiredIds.filter(id => !$(id));
@@ -752,7 +754,20 @@ if (missingIds.length) {
   });
 
   $("fixtureFilter").addEventListener("change", renderFixtures);
-  $("analyseBtts").addEventListener("click", renderBttsAnalysis);\n  $("analyseX12").addEventListener("click", renderX12Analysis);\n  $("x12Home").addEventListener("change", () => {\n    if ($("x12Home").value === $("x12Away").value) {\n      const alt = [...$("x12Away").options].find(o => o.value !== $("x12Home").value);\n      if (alt) $("x12Away").value = alt.value;\n    }\n  });\n  $("x12Away").addEventListener("change", () => {\n    if ($("x12Away").value === $("x12Home").value) {\n      const alt = [...$("x12Home").options].find(o => o.value !== $("x12Away").value);\n      if (alt) $("x12Home").value = alt.value;\n    }\n  });
+  $("analyseBtts").addEventListener("click", renderBttsAnalysis);
+  $("analyseX12").addEventListener("click", renderX12Analysis);
+  $("x12Home").addEventListener("change", () => {
+    if ($("x12Home").value === $("x12Away").value) {
+      const alt = [...$("x12Away").options].find(o => o.value !== $("x12Home").value);
+      if (alt) $("x12Away").value = alt.value;
+    }
+  });
+  $("x12Away").addEventListener("change", () => {
+    if ($("x12Away").value === $("x12Home").value) {
+      const alt = [...$("x12Home").options].find(o => o.value !== $("x12Away").value);
+      if (alt) $("x12Home").value = alt.value;
+    }
+  });
 
   $("bttsHome").addEventListener("change", () => {
     if ($("bttsHome").value === $("bttsAway").value) {
