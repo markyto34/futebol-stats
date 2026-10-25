@@ -530,32 +530,48 @@ function renderBttsAnalysis() {
 function estimateMatch(home, away) {
   const hHome = teamStats(home, "home", 10);
   const aAway = teamStats(away, "away", 10);
-
   const goalModel = expectedGoalsForMatch(home, away);
-  const homeGoals = goalModel ? goalModel.lambdaHome : null;
-  const awayGoals = goalModel ? goalModel.lambdaAway : null;
+  const leagueGoals = leagueGoalAverages();
+
+  // Se não houver amostra da equipa, usar a média observada da competição
+  // em vez de deixar o cartão vazio. A origem é indicada na interface.
+  const homeGoals = goalModel?.lambdaHome ?? leagueGoals.home;
+  const awayGoals = goalModel?.lambdaAway ?? leagueGoals.away;
+  const goalFallback = !goalModel && homeGoals !== null && awayGoals !== null;
+
+  const played = matches.filter(m => m.played);
+  const leagueCornerTotals = played
+    .filter(m => m.homeCorners !== null && m.awayCorners !== null)
+    .map(m => m.homeCorners + m.awayCorners);
   const homeCorners = average([hHome.cornersFor, aAway.cornersAgainst]);
   const awayCorners = average([aAway.cornersFor, hHome.cornersAgainst]);
+  const teamCornerEstimate = homeCorners !== null && awayCorners !== null;
+  const totalCorners = teamCornerEstimate
+    ? homeCorners + awayCorners
+    : average(leagueCornerTotals);
 
   const sample = [
     ...recentTeamGames(home, "home", 10),
     ...recentTeamGames(away, "away", 10)
   ].filter(m => m.homeCorners !== null && m.awayCorners !== null);
+  const totals = sample.length ? sample.map(m => m.homeCorners + m.awayCorners) : leagueCornerTotals;
+  const cornerFallback = sample.length === 0 && leagueCornerTotals.length > 0;
 
-  const totals = sample.map(m => m.homeCorners + m.awayCorners);
-
-  const btts = goalModel;
+  let btts = goalModel;
+  if (!btts && homeGoals !== null && awayGoals !== null) {
+    const yes = (1 - Math.exp(-homeGoals)) * (1 - Math.exp(-awayGoals));
+    btts = { bttsYes: yes, bttsNo: 1 - yes, fallback: true };
+  }
 
   return {
-    homeGoals,
-    awayGoals,
-    totalGoals: homeGoals !== null && awayGoals !== null
-      ? homeGoals + awayGoals : null,
-    totalCorners: homeCorners !== null && awayCorners !== null
-      ? homeCorners + awayCorners : null,
+    homeGoals, awayGoals,
+    totalGoals: homeGoals !== null && awayGoals !== null ? homeGoals + awayGoals : null,
+    totalCorners,
     over95: percent(totals, n => n >= 10),
     over105: percent(totals, n => n >= 11),
-    cornerSample: totals.length,
+    cornerSample: sample.length || leagueCornerTotals.length,
+    goalFallback,
+    cornerFallback,
     btts
   };
 }
@@ -622,7 +638,7 @@ function renderFixtures() {
         <div class="pred"><span>Ambas Marcam — Não</span><strong>${b ? fmt(b.bttsNo * 100) + "%" : "N/D"}</strong></div>
       </div>
 
-      <p class="muted">Amostra de cantos: ${p.cornerSample} jogos. A previsão BTTS usa até 10 jogos em casa da equipa da casa e 10 fora da visitante. São estimativas iniciais, ainda sem validação retrospetiva.</p>
+      <p class="muted">${p.goalFallback ? "Golos: referência pela média da competição, por falta de amostra específica das equipas. " : "Golos: estimativa baseada nos dados das equipas. "}${p.cornerFallback ? "Cantos e históricos: referência geral da competição, por falta de amostra específica. " : "Cantos e históricos: dados dos jogos disponíveis. "}Base usada: ${p.cornerSample} jogo(s) com cantos. Valores de referência não equivalem a dados específicos das equipas; modelo ainda sem validação retrospetiva.</p>
       <p><button type="button" class="analyseFixture">Analisar este confronto</button></p>
     </article>`;
   }).join("");
