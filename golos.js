@@ -41,16 +41,16 @@
         <div class="stat"><span>Amostra casa / fora</span><strong>${p.homeSample} / ${p.awaySample}</strong></div>
       </div>
       <h3>Over / Under ao intervalo</h3>
-      <div class="tablewrap"><table><thead><tr><th>Linha HT</th><th>Prob. Over</th><th>Odd justa Over</th><th>Prob. Under</th><th>Odd justa Under</th></tr></thead><tbody>
-      ${linesHT.map(x => `<tr><td>${x.line.toString().replace(".", ",")}</td><td>${pct(x.over)}</td><td>${odds(x.over > 0 ? 1/x.over : null)}</td><td>${pct(x.under)}</td><td>${odds(x.under > 0 ? 1/x.under : null)}</td></tr>`).join("")}
+      <div class="tablewrap"><table><thead><tr><th>Linha HT</th><th>Prob. Over</th><th>Prob. Under</th></tr></thead><tbody>
+      ${linesHT.map(x => `<tr><td>${x.line.toString().replace(".", ",")}</td><td>${pct(x.over)}</td><td>${pct(x.under)}</td></tr>`).join("")}
       </tbody></table></div>
       <h3>Resultado ao intervalo (1X2 HT)</h3>
       <div class="stats">
-        <div class="stat"><span>Casa a vencer HT</span><strong>${pct(h)}</strong><span>Odd justa: ${odds(h > 0 ? 1/h : null)}</span></div>
-        <div class="stat"><span>Empate HT</span><strong>${pct(d)}</strong><span>Odd justa: ${odds(d > 0 ? 1/d : null)}</span></div>
-        <div class="stat"><span>Visitante a vencer HT</span><strong>${pct(a)}</strong><span>Odd justa: ${odds(a > 0 ? 1/a : null)}</span></div>
+        <div class="stat"><span>Casa a vencer HT</span><strong>${pct(h)}</strong></div>
+        <div class="stat"><span>Empate HT</span><strong>${pct(d)}</strong></div>
+        <div class="stat"><span>Visitante a vencer HT</span><strong>${pct(a)}</strong></div>
       </div>
-      <p class="muted">Base: golos HT dos últimos jogos em casa da equipa da casa e fora da visitante, ajustados à média da competição. Registos HT válidos na competição: ${p.leagueSample}. Modelo Poisson simples, ainda sem validação retrospetiva; probabilidades e odds justas são estimativas, não garantias.</p>`;
+      <p class="muted">Base: golos HT dos últimos jogos em casa da equipa da casa e fora da visitante, ajustados à média da competição. Registos HT válidos na competição: ${p.leagueSample}. Modelo Poisson simples, ainda sem validação retrospetiva; probabilidades são estimativas, não garantias.</p>`;
   }
 
   function avoidSame(changedId, otherId) {
