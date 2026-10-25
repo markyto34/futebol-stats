@@ -896,7 +896,7 @@ if (missingIds.length) {
   if ($("analyseCorners")) $("analyseCorners").addEventListener("click", renderCornerPrediction);
   if ($("analyseX12") && $("x12Home") && $("x12Away")) {
   $("analyseX12").addEventListener("click", renderX12Analysis);
-  // Recalcula automaticamente quando qualquer odd é alterada, sem exigir novo clique.
+
 
   $("x12Home").addEventListener("change", () => {
     if ($("x12Home").value === $("x12Away").value) {
