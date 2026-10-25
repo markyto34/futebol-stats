@@ -448,6 +448,10 @@ function calculateCornerPrediction(home, away) {
   const homeCornerSample = hs.cornerSample;
   const awayCornerSample = aa.cornerSample;
   const cornerGames = homeCornerSample + awayCornerSample;
+  // Exigir pelo menos 3 jogos completos por equipa para evitar estimativas extremas com amostras mínimas.
+  if (homeCornerSample < 3 || awayCornerSample < 3) {
+    return { insufficientSample: true, homeCornerSample, awayCornerSample, cornerGames };
+  }
   const lines = [8.5, 9.5, 10.5, 11.5, 12.5];
   return {
     homeCornerMean, awayCornerMean, total,
@@ -464,6 +468,10 @@ function renderCornerPrediction() {
   if (home === away) { result.innerHTML = "<p>Escolhe duas equipas diferentes.</p>"; return; }
   const p = calculateCornerPrediction(home, away);
   if (!p) { result.innerHTML = "<p>Não existem dados de cantos suficientes para esta previsão.</p>"; return; }
+  if (p.insufficientSample) {
+    result.innerHTML = `<p>Não vou apresentar uma previsão de cantos com uma amostra tão pequena.</p><p class="muted">Jogos com cantos completos: ${esc(home)} em casa — ${p.homeCornerSample}; ${esc(away)} fora — ${p.awayCornerSample}. São necessários pelo menos 3 jogos válidos por equipa. Os registos em falta não são tratados como zero.</p>`;
+    return;
+  }
   const oddOver = Number($("cornerOddsOver95")?.value);
   const oddUnder = Number($("cornerOddsUnder95")?.value);
   const over = p.probabilities.find(x => x.line === 9.5).over;
