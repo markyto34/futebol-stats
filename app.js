@@ -877,6 +877,14 @@ if (missingIds.length) {
   if ($("analyseCorners")) $("analyseCorners").addEventListener("click", renderCornerPrediction);
   if ($("analyseX12") && $("x12Home") && $("x12Away")) {
   $("analyseX12").addEventListener("click", renderX12Analysis);
+  // Recalcula automaticamente quando qualquer odd é alterada, sem exigir novo clique.
+  ["x12OddsHome", "x12OddsDraw", "x12OddsAway"].forEach(id => {
+    const field = $(id);
+    if (field) {
+      field.addEventListener("input", renderX12Analysis);
+      field.addEventListener("change", renderX12Analysis);
+    }
+  });
   $("x12Home").addEventListener("change", () => {
     if ($("x12Home").value === $("x12Away").value) {
       const alt = [...$("x12Away").options].find(o => o.value !== $("x12Home").value);
