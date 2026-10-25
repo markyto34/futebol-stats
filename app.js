@@ -575,8 +575,9 @@ function renderX12Analysis() {
     const league = leagueGoalAverages();
     const homeGames = recentTeamGames(home, "home", 10);
     const awayGames = recentTeamGames(away, "away", 10);
-    result.innerHTML = `<p>Não foi possível calcular a previsão com os dados disponíveis.</p>
-      <p class="muted">Diagnóstico: ${esc(home)} — ${homeGames.length} jogos em casa; ${esc(away)} — ${awayGames.length} jogos fora. Média de golos da competição: casa ${fmt(league.home,2)}, visitante ${fmt(league.away,2)}. Confirma se a época selecionada tem resultados suficientes para estas equipas.</p>`;
+    const insufficientSample = homeGames.length < 5 || awayGames.length < 5;
+    result.innerHTML = `<p>Não foi possível calcular uma previsão 1X2 fiável com os dados disponíveis.</p>
+      <p class="muted">Diagnóstico: ${esc(home)} — ${homeGames.length} jogos concluídos em casa; ${esc(away)} — ${awayGames.length} jogos concluídos fora. O modelo exige pelo menos 5 jogos no respetivo contexto casa/fora para cada equipa. ${insufficientSample ? "Amostra insuficiente: não serão apresentadas probabilidades nem odds justas, para evitar falsa precisão." : "Verifica se existem resultados válidos suficientes e se os nomes das equipas coincidem."} Médias da competição: casa ${fmt(league.home,2)} golos; visitante ${fmt(league.away,2)} golos. Esta regra reduz o risco de estimativas extremas, mas não substitui validação retrospetiva.</p>`;
     return;
   }
 
