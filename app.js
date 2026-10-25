@@ -107,6 +107,8 @@ function normalizeResult(row) {
     awayGoals,
     htHomeGoals: numberValue(getValue(row, ["ht_home", "HTHG", "home_ht_goals"])),
     htAwayGoals: numberValue(getValue(row, ["ht_away", "HTAG", "away_ht_goals"])),
+    htHomeCorners: numberValue(getValue(row, ["ht_home_corners", "home_ht_corners", "HHC"])),
+    htAwayCorners: numberValue(getValue(row, ["ht_away_corners", "away_ht_corners", "AHC"])),
     homeCorners: numberValue(getValue(row, [
       "home_corners", "HomeCorners", "HC", "home_corner"
     ])),
@@ -423,6 +425,55 @@ function renderCornerPrediction() {
   <p class="muted">Amostra conjunta de cantos: ${p.cornerGames} registos. Modelo Poisson simples baseado em médias casa/fora; não considera árbitro, onzes, contexto tático ou estado do marcador e não foi validado retrospetivamente.</p>`;
 }
 
+function expectedHT1X2(home, away) {
+  const rows = matches.filter(m => m.htHomeGoals !== null && m.htAwayGoals !== null);
+  const homeRows = rows.filter(m => m.home === home).slice(-10);
+  const awayRows = rows.filter(m => m.away === away).slice(-10);
+  if (homeRows.length < 2 || awayRows.length < 2) return { available:false, count: rows.length, homeN:homeRows.length, awayN:awayRows.length };
+  const avg = arr => arr.reduce((s,v)=>s+v,0)/arr.length;
+  const leagueHome = avg(rows.map(m=>m.htHomeGoals));
+  const leagueAway = avg(rows.map(m=>m.htAwayGoals));
+  const homeAttack = avg(homeRows.map(m=>m.htHomeGoals));
+  const homeConcede = avg(homeRows.map(m=>m.htAwayGoals));
+  const awayAttack = avg(awayRows.map(m=>m.htAwayGoals));
+  const awayConcede = avg(awayRows.map(m=>m.htHomeGoals));
+  const lh = Math.max(0.05, avg([homeAttack, awayConcede, leagueHome]));
+  const la = Math.max(0.05, avg([awayAttack, homeConcede, leagueAway]));
+  let h=0,d=0,a=0;
+  for(let i=0;i<=8;i++) for(let j=0;j<=8;j++){
+    const q=poissonProbability(i,lh)*poissonProbability(j,la);
+    if(i>j) h+=q; else if(i===j) d+=q; else a+=q;
+  }
+  const total=h+d+a;
+  return {available:true,home:h/total,draw:d/total,away:a/total,lh,la,homeN:homeRows.length,awayN:awayRows.length,count:rows.length};
+}
+function renderX12HT() {
+ const el=$("x12HtResult"), home=$("x12Home")?.value, away=$("x12Away")?.value;
+ if(!el) return;
+ if(!home||!away){el.innerHTML="<p>Seleciona as equipas acima para calcular a previsão 1X2 ao intervalo.</p>";return;}
+ const p=expectedHT1X2(home,away);
+ if(!p.available){el.innerHTML=`<p>Não há dados HT suficientes para esta previsão nesta competição/época.</p><p class="muted">Registos com resultado ao intervalo: ${p.count}. Amostra encontrada: ${esc(home)} (${p.homeN}) e ${esc(away)} (${p.awayN}).</p>`;return;}
+ el.innerHTML=`<h3>${esc(home)} vs. ${esc(away)} — ao intervalo</h3><div class="stats">
+ <div class="stat"><span>Casa (1 HT)</span><strong>${fmt(p.home*100)}%</strong><span>Odd justa: ${fmt(1/p.home,2)}</span></div>
+ <div class="stat"><span>Empate (X HT)</span><strong>${fmt(p.draw*100)}%</strong><span>Odd justa: ${fmt(1/p.draw,2)}</span></div>
+ <div class="stat"><span>Visitante (2 HT)</span><strong>${fmt(p.away*100)}%</strong><span>Odd justa: ${fmt(1/p.away,2)}</span></div></div>
+ <p>Golos HT esperados: casa ${fmt(p.lh,2)} — visitante ${fmt(p.la,2)}. Amostra: ${p.homeN} jogos em casa e ${p.awayN} fora.</p><p class="muted">Estimativa Poisson com resultados HT históricos disponíveis; não é garantia e não foi validada retrospetivamente.</p>`;
+}
+function renderCornersHT() {
+ const el=$("cornerHtResult"), home=$("cornerHome")?.value, away=$("cornerAway")?.value;
+ if(!el) return;
+ if(!home||!away){el.innerHTML="<p>Seleciona as equipas acima para calcular a previsão de cantos ao intervalo.</p>";return;}
+ const rows=matches.filter(m=>m.htHomeCorners!==null&&m.htAwayCorners!==null);
+ const hr=rows.filter(m=>m.home===home).slice(-10), ar=rows.filter(m=>m.away===away).slice(-10);
+ if(hr.length<2||ar.length<2){el.innerHTML=`<p>Não há dados históricos suficientes de cantos ao intervalo nesta competição/época.</p><p class="muted">A fonte tem ${rows.length} jogos com cantos HT; amostra para ${esc(home)}: ${hr.length}, para ${esc(away)}: ${ar.length}. Não será usada a média dos 90 minutos como se fosse dado HT.</p>`;return;}
+ const avg=a=>a.reduce((s,v)=>s+v,0)/a.length;
+ const h=avg([...hr.map(m=>m.htHomeCorners),...ar.map(m=>m.htAwayCorners)]);
+ const a=avg([...ar.map(m=>m.htAwayCorners),...hr.map(m=>m.htHomeCorners)]);
+ const total=Math.max(.1,h+a);
+ const lines=[2.5,3.5,4.5,5.5,6.5];
+ el.innerHTML=`<h3>${esc(home)} vs. ${esc(away)} — cantos ao intervalo</h3><div class="stats"><div class="stat"><span>Cantos esperados — casa HT</span><strong>${fmt(h,2)}</strong></div><div class="stat"><span>Cantos esperados — visitante HT</span><strong>${fmt(a,2)}</strong></div><div class="stat"><span>Total esperado HT</span><strong>${fmt(total,2)}</strong></div></div>
+ <div class="tablewrap"><table><thead><tr><th>Linha</th><th>Over estimado</th><th>Odd justa Over</th><th>Under estimado</th><th>Odd justa Under</th></tr></thead><tbody>${lines.map(line=>{const over=poissonOverLine(total,line);return `<tr><td>${String(line).replace(".",",")}</td><td>${fmt(over*100)}%</td><td>${fmt(1/over,2)}</td><td>${fmt((1-over)*100)}%</td><td>${fmt(1/(1-over),2)}</td></tr>`}).join("")}</tbody></table></div><p class="muted">Amostra HT: ${hr.length} jogos da equipa da casa e ${ar.length} da visitante. Estimativa simples, não validada.</p>`;
+}
 function renderX12Analysis() {
   const home = $("x12Home")?.value;
   const away = $("x12Away")?.value;
@@ -826,7 +877,7 @@ async function loadGames() {
     const teams = [...new Set(matches.flatMap(m => [m.home, m.away]))]
       .sort((a, b) => a.localeCompare(b));
 
-    populateTeamSelectors(teams);
+    populateTeamSelectors(teams);\n    renderX12HT();\n    renderCornersHT();
 
     $("status").textContent =
       `${matches.length} resultados carregados; ${teams.length} equipas encontradas. ${sourceUpdateLabel} Já podes escolher as equipas para a análise.`;
@@ -952,8 +1003,8 @@ if (missingIds.length) {
   });
 
   if ($("cornerHome") && $("cornerAway")) {
-    $("cornerHome").addEventListener("change", () => { if ($("cornerHome").value === $("cornerAway").value) { const alt = [...$("cornerAway").options].find(o => o.value !== $("cornerHome").value); if (alt) $("cornerAway").value = alt.value; } });
-    $("cornerAway").addEventListener("change", () => { if ($("cornerAway").value === $("cornerHome").value) { const alt = [...$("cornerHome").options].find(o => o.value !== $("cornerAway").value); if (alt) $("cornerHome").value = alt.value; } });
+    $("cornerHome").addEventListener("change", () => { if ($("cornerHome").value === $("cornerAway").value) { const alt = [...$("cornerAway").options].find(o => o.value !== $("cornerHome").value); if (alt) $("cornerAway").value = alt.value; } renderCornersHT(); });
+    $("cornerAway").addEventListener("change", () => { if ($("cornerAway").value === $("cornerHome").value) { const alt = [...$("cornerHome").options].find(o => o.value !== $("cornerAway").value); if (alt) $("cornerHome").value = alt.value; } renderCornersHT(); });
   }
 
   $("bttsAway").addEventListener("change", () => {
