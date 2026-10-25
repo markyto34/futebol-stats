@@ -107,7 +107,9 @@ function numberValue(value) {
   const cleaned = String(value).trim().replace(/\s/g, "").replace(",", ".");
   if (!cleaned) return null;
   const n = Number(cleaned);
-  return Number.isFinite(n) ? n : null;
+  // Estatísticas de golos/cantos não podem ser negativas. Tratar como ausente
+  // impede que um valor malformado contamine médias e probabilidades.
+  return Number.isFinite(n) && n >= 0 ? n : null;
 }
 
 function esc(value) {
@@ -364,7 +366,7 @@ function expectedGoalsForMatch(home, away, sampleLimit = 20) {
   const awayGames = recentTeamGames(away, "away", sampleLimit);
 
   // Usar uma amostra maior, mantendo apenas jogos no estádio relevante.
-  if (homeGames.length < 5 || awayGames.length < 5) return null;
+  if (homeGames.length < 3 || awayGames.length < 3) return null;
 
   const homeScored = average(homeGames.map(m => m.homeGoals));
   const homeConceded = average(homeGames.map(m => m.awayGoals));
@@ -475,7 +477,7 @@ function expectedHT1X2(home, away) {
   const rows = matches.filter(m => m.htHomeGoals !== null && m.htAwayGoals !== null);
   const homeRows = recentTeamGames(home, "home", 10).filter(m => m.htHomeGoals !== null && m.htAwayGoals !== null);
   const awayRows = recentTeamGames(away, "away", 10).filter(m => m.htHomeGoals !== null && m.htAwayGoals !== null);
-  if (homeRows.length < 5 || awayRows.length < 5 || rows.length < 20) {
+  if (homeRows.length < 3 || awayRows.length < 3 || rows.length < 20) {
     return { available:false, count:rows.length, homeN:homeRows.length, awayN:awayRows.length };
   }
 
@@ -509,7 +511,7 @@ function renderX12HT() {
 function renderCornersHT() {
  const el=$("cornerHtResult"),home=$("cornerHome")?.value,away=$("cornerAway")?.value;if(!el)return;if(!home||!away){el.innerHTML="<p>Seleciona as equipas para a previsão de cantos ao intervalo.</p>";return;}
  const rows=matches.filter(m=>m.htHomeCorners!==null&&m.htAwayCorners!==null),hr=recentTeamGames(home,"home",10).filter(m=>m.htHomeCorners!==null&&m.htAwayCorners!==null),ar=recentTeamGames(away,"away",10).filter(m=>m.htHomeCorners!==null&&m.htAwayCorners!==null);
- if(hr.length<5||ar.length<5||rows.length<20){el.innerHTML=`<p>Não há dados suficientes para uma previsão fiável de cantos HT.</p><p class="muted">Registos válidos: ${rows.length}; ${esc(home)}: ${hr.length}; ${esc(away)}: ${ar.length}. São necessários 5 jogos por equipa e 20 na competição.</p>`;return;}
+ if(hr.length<3||ar.length<3||rows.length<20){el.innerHTML=`<p>Não há dados suficientes para uma previsão fiável de cantos HT.</p><p class="muted">Registos válidos: ${rows.length}; ${esc(home)}: ${hr.length}; ${esc(away)}: ${ar.length}. São necessários pelo menos 3 jogos por equipa e 20 na competição.</p>`;return;}
  const avg=x=>x.reduce((s,v)=>s+v,0)/x.length,h=(avg(hr.map(m=>m.htHomeCorners))+avg(ar.map(m=>m.htHomeCorners)))/2,v=(avg(ar.map(m=>m.htAwayCorners))+avg(hr.map(m=>m.htAwayCorners)))/2,total=Math.max(.1,h+v),lines=[2.5,3.5,4.5,5.5,6.5];
  el.innerHTML=`<h3>${esc(home)} vs. ${esc(away)} — cantos ao intervalo</h3><div class="stats"><div class="stat"><span>Cantos esperados casa HT</span><strong>${fmt(h,2)}</strong></div><div class="stat"><span>Cantos esperados visitante HT</span><strong>${fmt(v,2)}</strong></div><div class="stat"><span>Total esperado HT</span><strong>${fmt(total,2)}</strong></div></div><div class="tablewrap"><table><thead><tr><th>Linha</th><th>Prob. Over</th><th>Prob. Under</th></tr></thead><tbody>${lines.map(line=>{const over=poissonOverLine(total,line);return `<tr><td>${String(line).replace(".",",")}</td><td>${fmt(over*100)}%</td><td>${fmt((1-over)*100)}%</td></tr>`}).join("")}</tbody></table></div><p class="muted">Amostra HT: ${hr.length} jogos em casa e ${ar.length} fora. Modelo ainda não validado.</p>`;
 }
