@@ -68,8 +68,10 @@ function getValue(obj, names) {
 }
 
 function numberValue(value) {
-  if (value === null || value === undefined || value === "") return null;
-  const n = Number(String(value).replace(",", "."));
+  if (value === null || value === undefined) return null;
+  const cleaned = String(value).trim().replace(/\\s/g, "").replace(",", ".");
+  if (!cleaned) return null;
+  const n = Number(cleaned);
   return Number.isFinite(n) ? n : null;
 }
 
@@ -448,7 +450,8 @@ function renderX12Analysis() {
   const historical = [p.home, p.draw, p.away];
   const labels = ["Vitória da casa (1)", "Empate (X)", "Vitória visitante (2)"];
   const oddsIds = ["x12OddsHome", "x12OddsDraw", "x12OddsAway"];
-  const marketOdds = oddsIds.map(id => numberValue($(id)?.value));
+  const rawOdds = oddsIds.map(id => String($(id)?.value ?? "").trim());
+  const marketOdds = rawOdds.map(numberValue);
   const hasMarket = marketOdds.every(o => o !== null && o > 1);
   let comparisonHtml = "";
   let finalProbs = historical;
@@ -485,7 +488,7 @@ function renderX12Analysis() {
       <div class="tablewrap"><table><thead><tr><th>Resultado</th><th>Odd atual</th><th>Modelo histórico</th><th>Mercado sem margem</th><th>Prob. final ajustada</th><th>Odd justa final</th><th>Final − mercado</th><th>Leitura matemática</th></tr></thead><tbody>${rows}</tbody></table></div>
       <p class="muted">O indicador compara a probabilidade final com a odd introduzida. Não garante lucro nem prova que exista vantagem real; isso exige testar o modelo com resultados históricos.</p>`;
   } else {
-    comparisonHtml = "<p class=\"muted\">Preenche as três odds decimais (1, X e 2) para calcular também a previsão final ajustada. Sem odds completas, são mostradas apenas as probabilidades históricas.</p>";
+    comparisonHtml = `<p class="muted">Para mostrar a tabela final, são necessárias três odds decimais válidas, todas superiores a 1. Os valores lidos agora foram: 1 = "${esc(rawOdds[0] || "vazio")}" (${marketOdds[0] === null ? "inválida" : fmt(marketOdds[0], 2)}); X = "${esc(rawOdds[1] || "vazio")}" (${marketOdds[1] === null ? "inválida" : fmt(marketOdds[1], 2)}); 2 = "${esc(rawOdds[2] || "vazio")}" (${marketOdds[2] === null ? "inválida" : fmt(marketOdds[2], 2)}). Usa, por exemplo, 2,10 / 3,30 / 3,60.</p>`;
   }
 
   result.innerHTML = `
