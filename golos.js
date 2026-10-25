@@ -9,7 +9,8 @@
     if(!home||!away){output.innerHTML="<p>Seleciona as duas equipas.</p>";return;}if(home===away){output.innerHTML="<p>Escolhe duas equipas diferentes.</p>";return;}
     const p=estimateMatch(home,away);if(!p){output.innerHTML="<p>Não existem dados suficientes para esta previsão.</p>";return;}
     const lines=[1.5,2.5,3.5,4.5];
-    output.innerHTML=`<h3>${home} vs. ${away}</h3><div class="stats"><div class="stat"><span>Golos esperados casa</span><strong>${num(p.lambdaHome,2)}</strong></div><div class="stat"><span>Golos esperados fora</span><strong>${num(p.lambdaAway,2)}</strong></div></div><div class="tablewrap"><table><thead><tr><th>Linha</th><th>Prob. Over</th><th>Prob. Under</th><th>Histórico Over</th></tr></thead><tbody>${lines.map(line=>{const over=poissonOver(p.lambdaHome+p.lambdaAway,line);return `<tr><td>${line.toString().replace(".",",")}</td><td>${pct(over)}</td><td>${pct(1-over)}</td><td>${historicalOver(line)}</td></tr>`;}).join("")}</tbody></table></div><p class="muted">Probabilidades estatísticas estimadas; não são garantias.</p>`;
+    const hg = p.homeGoals, ag = p.awayGoals, total = hg !== null && ag !== null ? hg + ag : null;
+    output.innerHTML=`<h3>${esc(home)} vs. ${esc(away)}</h3><div class="stats"><div class="stat"><span>Golos esperados casa</span><strong>${num(hg,2)}</strong></div><div class="stat"><span>Golos esperados fora</span><strong>${num(ag,2)}</strong></div><div class="stat"><span>Cantos esperados totais</span><strong>${num(p.totalCorners,2)}</strong></div><div class="stat"><span>Amostra de cantos</span><strong>${p.cornerSample}</strong></div></div>${total === null ? "<p>Não foi possível calcular probabilidades de golos: faltam dados de golos para o modelo. As estatísticas de cantos acima continuam disponíveis quando existem.</p>" : `<div class="tablewrap"><table><thead><tr><th>Linha</th><th>Prob. Over</th><th>Prob. Under</th><th>Histórico Over</th></tr></thead><tbody>${lines.map(line=>{const over=poissonOver(total,line);return `<tr><td>${line.toString().replace(".",",")}</td><td>${pct(over)}</td><td>${pct(1-over)}</td><td>${historicalOver(line)}</td></tr>`;}).join("")}</tbody></table></div>`}<p class="muted">Probabilidades estatísticas estimadas; não são garantias. N/D indica ausência de dados válidos.</p>`;
   }
 
   function renderGoalsHT() {
@@ -20,7 +21,18 @@
     if (home === away) { output.innerHTML = "<p>Escolhe duas equipas diferentes.</p>"; return; }
     const p = expectedHalfGoals(home, away);
     if (!p) {
-      output.innerHTML = "<p>Não há dados HT suficientes para esta competição ou para estas equipas. A fonte pode não disponibilizar resultados ao intervalo nesta época.</p>";
+      const hr = recentTeamGames(home, "home", 10).filter(m => m.htHomeGoals !== null && m.htAwayGoals !== null);
+      const ar = recentTeamGames(away, "away", 10).filter(m => m.htHomeGoals !== null && m.htAwayGoals !== null);
+      const avg = values => values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : null;
+      output.innerHTML = `<h3>${esc(home)} vs. ${esc(away)} — intervalo</h3>
+        <p>Não há dados HT suficientes para calcular as probabilidades, mas estes são os registos disponíveis.</p>
+        <div class="stats">
+          <div class="stat"><span>Golos HT marcados — casa</span><strong>${avg(hr.map(m => m.htHomeGoals)) === null ? "N/D" : avg(hr.map(m => m.htHomeGoals)).toFixed(2).replace(".", ",")}</strong></div>
+          <div class="stat"><span>Golos HT sofridos — casa</span><strong>${avg(hr.map(m => m.htAwayGoals)) === null ? "N/D" : avg(hr.map(m => m.htAwayGoals)).toFixed(2).replace(".", ",")}</strong></div>
+          <div class="stat"><span>Golos HT marcados — visitante</span><strong>${avg(ar.map(m => m.htAwayGoals)) === null ? "N/D" : avg(ar.map(m => m.htAwayGoals)).toFixed(2).replace(".", ",")}</strong></div>
+          <div class="stat"><span>Golos HT sofridos — visitante</span><strong>${avg(ar.map(m => m.htHomeGoals)) === null ? "N/D" : avg(ar.map(m => m.htHomeGoals)).toFixed(2).replace(".", ",")}</strong></div>
+        </div>
+        <p class="muted">Amostra HT: ${hr.length} jogos em casa e ${ar.length} fora. Não se inventam probabilidades quando faltam dados.</p>`;
       return;
     }
     const total = p.home + p.away;
