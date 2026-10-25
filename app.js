@@ -501,7 +501,7 @@ function expectedHT1X2(home, away) {
   const rows = matches.filter(m => m.htHomeGoals !== null && m.htAwayGoals !== null);
   const homeRows = recentTeamGames(home, "home", 10).filter(m => m.htHomeGoals !== null && m.htAwayGoals !== null);
   const awayRows = recentTeamGames(away, "away", 10).filter(m => m.htHomeGoals !== null && m.htAwayGoals !== null);
-  if (homeRows.length < 2 || awayRows.length < 2 || rows.length === 0) {
+  if (homeRows.length < 5 || awayRows.length < 5 || rows.length < 20) {
     return { available:false, count:rows.length, homeN:homeRows.length, awayN:awayRows.length };
   }
 
@@ -546,6 +546,7 @@ function renderCornersHT() {
  const hr=recentTeamGames(home, "home", 10).filter(m=>m.htHomeCorners!==null&&m.htAwayCorners!==null);
  const ar=recentTeamGames(away, "away", 10).filter(m=>m.htHomeCorners!==null&&m.htAwayCorners!==null);
  if(hr.length<3||ar.length<3){el.innerHTML=`<p>Não há dados históricos suficientes de cantos ao intervalo nesta competição/época.</p><p class="muted">A fonte tem ${rows.length} jogos com cantos HT; amostra para ${esc(home)}: ${hr.length}, para ${esc(away)}: ${ar.length}. São necessários pelo menos 3 jogos válidos por equipa. Não será usada a média dos 90 minutos como se fosse dado HT.</p>`;return;}
+ if (hr.length < 5 || ar.length < 5 || rows.length < 20) {el.innerHTML=`<p>Não há dados suficientes para uma previsão fiável de cantos HT.</p><p class="muted">Amostra válida HT: ${rows.length} jogos na competição; ${esc(home)} tem ${hr.length} jogos em casa e ${esc(away)} tem ${ar.length} fora. São necessários pelo menos 5 jogos válidos por equipa e 20 na competição. Não serão calculadas odds justas com uma amostra tão curta.</p>`;return;}
  const avg=a=>a.reduce((s,v)=>s+v,0)/a.length;
  const h=(avg(hr.map(m=>m.htHomeCorners))+avg(ar.map(m=>m.htHomeCorners)))/2;
  const a=(avg(ar.map(m=>m.htAwayCorners))+avg(hr.map(m=>m.htAwayCorners)))/2;
