@@ -4,6 +4,7 @@
 const $ = id => document.getElementById(id);
 let matches = [];
 let fixturesData = [];
+let loadToken = 0;
 
 function parseCSV(text) {
   const rows = [];
@@ -824,6 +825,7 @@ function populateTeamSelectors(teams) {
 }
 
 async function loadGames() {
+  const token = ++loadToken;
   const league = $("league").value;
   const season = $("season").value;
   const button = $("load");
@@ -842,6 +844,7 @@ async function loadGames() {
 
   try {
     const response = await fetch(`${base}results_${season}.csv`);
+    if (token !== loadToken) return;
 
     if (!response.ok) {
       throw new Error(
@@ -853,8 +856,10 @@ async function loadGames() {
     let sourceUpdateLabel = "A data de atualização da fonte não está disponível.";
     try {
       const summaryResponse = await fetch("https://raw.githubusercontent.com/oladeeayo/open-matchday/master/build_summary.json");
+      if (token !== loadToken) return;
       if (summaryResponse.ok) {
         const summary = await summaryResponse.json();
+        if (token !== loadToken) return;
         const leagueInfo = Array.isArray(summary.leagues)
           ? summary.leagues.find(item => item.folder === "data/" + league)
           : null;
@@ -876,6 +881,7 @@ async function loadGames() {
     }
 
     const csv = await response.text();
+    if (token !== loadToken) return;
     matches = parseCSV(csv).map(normalizeResult).filter(Boolean);
 
     if (!matches.length) {
@@ -897,9 +903,11 @@ async function loadGames() {
     try {
       const fixtureResponse =
         await fetch(`${base}fixtures_${season}.csv`);
+      if (token !== loadToken) return;
 
       if (fixtureResponse.ok) {
         const fixtureCSV = await fixtureResponse.text();
+        if (token !== loadToken) return;
 
         fixturesData = parseCSV(fixtureCSV)
           .map(normalizeFixture)
@@ -927,6 +935,7 @@ async function loadGames() {
     }
 
   } catch (error) {
+    if (token !== loadToken) return;
     console.error(error);
     $("status").textContent = `Erro: ${error.message}`;
     $("fixtureStatus").textContent =
@@ -957,7 +966,7 @@ async function loadGames() {
     }
 
   } finally {
-    button.disabled = false;
+    if (token === loadToken) button.disabled = false;
   }
 }
 
