@@ -9,7 +9,7 @@
 <body class="page-golos">
 <header>
   <h1>⚽ Futebol Stats</h1>
-  <p>Previsão de golos: probabilidades Over/Under, golos esperados e odds justas.</p>
+  <p>Previsão de golos: probabilidades Over/Under e golos esperados.</p>
   <nav class="topnav" aria-label="Navegação principal">
     <a href="index.html" data-page="home">Visão geral</a>
     <a href="cantos.html" data-page="cantos">Cantos</a>
@@ -58,14 +58,13 @@
 
 <section class="panel" id="goals-section">
   <h2 style="margin-top:0">Previsão Over / Under — Golos</h2>
-  <p>Seleciona as equipas para estimar golos esperados e probabilidades de Over/Under. As odds são teóricas e o modelo ainda não foi validado retrospetivamente.</p>
+  <p>Seleciona as equipas para estimar golos esperados e probabilidades de Over/Under.</p>
   <div class="controls">
     <div><label for="goalHome">Equipa da casa</label><select id="goalHome" disabled><option value="">Carrega os dados primeiro</option></select></div>
     <div><label for="goalAway">Equipa visitante</label><select id="goalAway" disabled><option value="">Carrega os dados primeiro</option></select></div>
   </div>
   <div class="controls">
-    <div><label for="goalOddsOver25">Odd Over 2,5 (opcional)</label><input id="goalOddsOver25" inputmode="decimal" placeholder="Ex.: 1,85"></div>
-    <div><label for="goalOddsUnder25">Odd Under 2,5 (opcional)</label><input id="goalOddsUnder25" inputmode="decimal" placeholder="Ex.: 1,95"></div>
+    
   </div>
   <p><button id="analyseGoals" disabled>Calcular previsão de golos</button></p>
   <div id="goalsResult" aria-live="polite"><p>Carrega os dados da competição para começar.</p></div>
