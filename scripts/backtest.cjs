@@ -80,7 +80,7 @@ if(!file) {
   process.exit(2);
 }
 let csvText;
-if (/^https?:\\/\\//i.test(file)) {
+if (file.toLowerCase().startsWith("http://") || file.toLowerCase().startsWith("https://")) {
   const response = await fetch(file);
   if (!response.ok) throw new Error(`Falha ao obter CSV: HTTP ${response.status}`);
   csvText = await response.text();
