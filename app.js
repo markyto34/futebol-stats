@@ -335,6 +335,88 @@ function expectedGoalsForMatch(home, away) {
   };
 }
 
+
+function poissonProbability(k, lambda) {
+  if (k < 0 || lambda < 0 || !Number.isFinite(lambda)) return 0;
+  let p = Math.exp(-lambda);
+  for (let i = 1; i <= k; i++) p *= lambda / i;
+  return p;
+}
+
+function calculate1X2(home, away) {
+  const expected = expectedGoalsForMatch(home, away);
+  if (!expected) return null;
+  let pHome = 0, pDraw = 0, pAway = 0;
+  for (let h = 0; h <= 10; h++) {
+    for (let a = 0; a <= 10; a++) {
+      const p = poissonProbability(h, expected.lambdaHome) *
+                poissonProbability(a, expected.lambdaAway);
+      if (h > a) pHome += p;
+      else if (h === a) pDraw += p;
+      else pAway += p;
+    }
+  }
+  const total = pHome + pDraw + pAway;
+  if (!total) return null;
+  return {
+    home: pHome / total, draw: pDraw / total, away: pAway / total,
+    lambdaHome: expected.lambdaHome, lambdaAway: expected.lambdaAway,
+    homeSample: expected.homeSample, awaySample: expected.awaySample
+  };
+}
+
+function renderX12Analysis() {
+  const home = $("x12Home")?.value;
+  const away = $("x12Away")?.value;
+  const result = $("x12Result");
+  if (!home || !away || !result) return;
+  if (home === away) {
+    result.innerHTML = "<p>Escolhe duas equipas diferentes.</p>";
+    return;
+  }
+  const p = calculate1X2(home, away);
+  if (!p) {
+    result.innerHTML = "<p>Não existem dados suficientes para calcular esta previsão.</p>";
+    return;
+  }
+  const probs = [p.home, p.draw, p.away];
+  const labels = ["Vitória da casa (1)", "Empate (X)", "Vitória visitante (2)"];
+  const oddsIds = ["x12OddsHome", "x12OddsDraw", "x12OddsAway"];
+  const marketOdds = oddsIds.map(id => Number($(id)?.value));
+  const hasMarket = marketOdds.every(o => Number.isFinite(o) && o > 1);
+  let marketHtml = "";
+  if (hasMarket) {
+    const implied = marketOdds.map(o => 1 / o);
+    const overround = implied.reduce((s, v) => s + v, 0);
+    const fairMarket = implied.map(v => v / overround);
+    marketHtml = `
+      <h3>Comparação com o mercado</h3>
+      <p class="muted">Margem teórica da casa: ${fmt((overround - 1) * 100)}%. As probabilidades do mercado abaixo são normalizadas para retirar essa margem.</p>
+      <div class="tablewrap"><table><thead><tr><th>Resultado</th><th>Odd mercado</th><th>Prob. modelo</th><th>Prob. mercado*</th><th>Odd justa modelo</th><th>Diferença</th><th>Valor teórico</th></tr></thead><tbody>
+      ${labels.map((label, i) => {
+        const edge = probs[i] * marketOdds[i] - 1;
+        const diff = (probs[i] - fairMarket[i]) * 100;
+        const valueText = edge > 0.02 ? "Potencial positivo" : edge < -0.02 ? "Sem valor aparente" : "Marginal/neutro";
+        return `<tr><td>${label}</td><td>${fmt(marketOdds[i],2)}</td><td>${fmt(probs[i]*100)}%</td><td>${fmt(fairMarket[i]*100)}%</td><td>${fmt(1/probs[i],2)}</td><td>${diff > 0 ? "+" : ""}${fmt(diff)} p.p.</td><td>${valueText} (${edge > 0 ? "+" : ""}${fmt(edge*100)}%)</td></tr>`;
+      }).join("")}
+      </tbody></table></div>
+      <p class="muted">*Estimativa de mercado normalizada. “Valor teórico” é a diferença matemática entre probabilidade estimada × odd e 1; não garante lucro nem demonstra vantagem real sem validação histórica.</p>`;
+  } else {
+    marketHtml = "<p class=\"muted\">Para comparar com o mercado, preenche as três odds decimais (1, X e 2). Introduz as odds da mesma casa de apostas e do mesmo momento.</p>";
+  }
+  result.innerHTML = `
+    <h3>${esc(home)} vs. ${esc(away)}</h3>
+    <div class="stats">
+      <div class="stat"><span>Vitória da casa (1)</span><strong>${fmt(p.home*100)}%</strong><span>Odd justa: ${fmt(1/p.home,2)}</span></div>
+      <div class="stat"><span>Empate (X)</span><strong>${fmt(p.draw*100)}%</strong><span>Odd justa: ${fmt(1/p.draw,2)}</span></div>
+      <div class="stat"><span>Vitória visitante (2)</span><strong>${fmt(p.away*100)}%</strong><span>Odd justa: ${fmt(1/p.away,2)}</span></div>
+    </div>
+    <p>Golos esperados pelo modelo: casa ${fmt(p.lambdaHome,2)} — visitante ${fmt(p.lambdaAway,2)}. Amostra usada: ${p.homeSample} jogos recentes da equipa da casa em casa e ${p.awaySample} da visitante fora.</p>
+    ${marketHtml}
+    <p class="muted">Modelo estatístico inicial baseado em golos históricos e distribuição de Poisson. Não incorpora onzes, lesões, xG, cartões, calendário ou força individual detalhada. As probabilidades não estão validadas retrospetivamente e não devem ser tratadas como certezas.</p>
+  `;
+}
+
 function renderBttsAnalysis() {
   const homeSelect = $("bttsHome");
   const awaySelect = $("bttsAway");
@@ -535,6 +617,16 @@ function populateTeamSelectors(teams) {
   teamSelect.innerHTML = options;
   homeSelect.innerHTML = options;
   awaySelect.innerHTML = options;
+  const x12Home = $("x12Home");
+  const x12Away = $("x12Away");
+  if (x12Home && x12Away) {
+    x12Home.innerHTML = options;
+    x12Away.innerHTML = options;
+    if (teams.length > 1) x12Away.selectedIndex = 1;
+    x12Home.disabled = teams.length < 2;
+    x12Away.disabled = teams.length < 2;
+    $("analyseX12").disabled = teams.length < 2;
+  }
 
   if (teams.length > 1) {
     awaySelect.selectedIndex = 1;
@@ -648,7 +740,8 @@ const requiredIds = [
   "league", "season", "team", "period", "load",
   "status", "fixtureFilter", "fixtureStatus", "fixtures",
   "stats", "teamTitle", "venueStats", "recent",
-  "bttsHome", "bttsAway", "analyseBtts", "bttsResult"
+  "bttsHome", "bttsAway", "analyseBtts", "bttsResult",
+  "x12Home", "x12Away", "analyseX12", "x12Result", "x12OddsHome", "x12OddsDraw", "x12OddsAway"
 ];
 
 const missingIds = requiredIds.filter(id => !$(id));
@@ -670,6 +763,19 @@ if (missingIds.length) {
 
   $("fixtureFilter").addEventListener("change", renderFixtures);
   $("analyseBtts").addEventListener("click", renderBttsAnalysis);
+  $("analyseX12").addEventListener("click", renderX12Analysis);
+  $("x12Home").addEventListener("change", () => {
+    if ($("x12Home").value === $("x12Away").value) {
+      const alt = [...$("x12Away").options].find(o => o.value !== $("x12Home").value);
+      if (alt) $("x12Away").value = alt.value;
+    }
+  });
+  $("x12Away").addEventListener("change", () => {
+    if ($("x12Away").value === $("x12Home").value) {
+      const alt = [...$("x12Home").options].find(o => o.value !== $("x12Away").value);
+      if (alt) $("x12Home").value = alt.value;
+    }
+  });
 
   $("bttsHome").addEventListener("change", () => {
     if ($("bttsHome").value === $("bttsAway").value) {
