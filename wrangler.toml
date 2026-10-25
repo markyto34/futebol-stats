@@ -1,0 +1,4 @@
+name = "futebol-stats-api"
+main = "worker/api-football-worker.js"
+compatibility_date = "2026-10-25"
+workers_dev = true
