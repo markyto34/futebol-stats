@@ -678,7 +678,7 @@ async function loadGames() {
     populateTeamSelectors(teams);
 
     $("status").textContent =
-      `${matches.length} resultados carregados; ${teams.length} equipas encontradas.`;
+      `${matches.length} resultados carregados; ${teams.length} equipas encontradas. Já podes escolher as equipas na previsão 1X2.`;
 
     try {
       const fixtureResponse =
@@ -729,6 +729,10 @@ async function loadGames() {
     $("bttsHome").disabled = true;
     $("bttsAway").disabled = true;
     $("analyseBtts").disabled = true;
+    $("x12Home").disabled = true;
+    $("x12Away").disabled = true;
+    $("analyseX12").disabled = true;
+    $("x12Result").innerHTML = `<p>Não foi possível ativar a previsão porque os dados não foram carregados. Verifica a mensagem acima e tenta carregar novamente.</p>`;
 
   } finally {
     button.disabled = false;
