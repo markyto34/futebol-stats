@@ -56,3 +56,15 @@ As alterações no site podem demorar algum tempo a aparecer devido à cache do 
 ## Licença e utilização
 
 Projeto pessoal e informativo. Consulta a licença e as condições de utilização da fonte de dados original antes de redistribuir dados ou usar o projeto comercialmente.
+
+### Testes automáticos
+
+O repositório executa verificações de sintaxe JavaScript e testes unitários através do GitHub Actions em cada push e pull request. Para executar localmente com Node.js 22 ou compatível:
+
+```bash
+node --check app.js
+node --check golos.js
+node --test tests/*.test.cjs
+```
+
+Os testes atuais cobrem funções de parsing/normalização e fórmulas básicas; não substituem testes no navegador nem um backtesting cronológico com resultados reais.
