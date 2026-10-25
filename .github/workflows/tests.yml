@@ -19,5 +19,6 @@ jobs:
         run: |
           node --check app.js
           node --check golos.js
+          node --check scripts/backtest.cjs
       - name: Run model and data tests
         run: node --test tests/*.test.cjs
