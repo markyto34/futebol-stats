@@ -42,6 +42,7 @@ test("numberValue handles Portuguese decimals and missing values", () => {
   assert.equal(c.numberValue(" 2,5 "), 2.5);
   assert.equal(c.numberValue(""), null);
   assert.equal(c.numberValue("abc"), null);
+  assert.equal(c.numberValue("-1"), null);
   assert.equal(c.numberValue(null), null);
 });
 
@@ -83,4 +84,9 @@ test("normalization rejects results without teams or final score", () => {
   assert.equal(valid.homeGoals, 2);
   assert.equal(valid.awayGoals, 1);
   assert.equal(valid.homeCorners, null);
+  const withCorners = c.normalizeResult({home:"Porto", away:"Benfica", ft_home:"2", ft_away:"1", home_corners:"6", away_corners:"4", home_corners_1h:"3", away_corners_1h:"2"});
+  assert.equal(withCorners.homeCorners, 6);
+  assert.equal(withCorners.awayCorners, 4);
+  assert.equal(withCorners.htHomeCorners, 3);
+  assert.equal(withCorners.htAwayCorners, 2);
 });
