@@ -6,6 +6,40 @@ let matches = [];
 let fixturesData = [];
 let loadToken = 0;
 
+const DATA_CACHE_TTL_MS = 15 * 60 * 1000;
+
+async function cachedFetchText(url, token) {
+  const key = "futebol-stats:csv:" + url;
+  try {
+    const cached = sessionStorage.getItem(key);
+    if (cached) {
+      const entry = JSON.parse(cached);
+      if (entry && typeof entry.text === "string" &&
+          Number.isFinite(entry.savedAt) &&
+          Date.now() - entry.savedAt < DATA_CACHE_TTL_MS) {
+        return { ok: true, status: 200, text: entry.text, fromCache: true };
+      }
+    }
+  } catch (error) {
+    console.warn("Não foi possível ler a cache da sessão:", error);
+  }
+
+  const response = await fetch(url);
+  if (token !== loadToken) return { ok: false, status: 0, text: "", stale: true };
+  if (!response.ok) return { ok: false, status: response.status, text: "" };
+  const text = await response.text();
+  if (token !== loadToken) return { ok: false, status: 0, text: "", stale: true };
+
+  try {
+    sessionStorage.setItem(key, JSON.stringify({ text, savedAt: Date.now() }));
+  } catch (error) {
+    // A cache é opcional: a aplicação continua a funcionar se estiver indisponível/cheia.
+    console.warn("Não foi possível guardar a cache da sessão:", error);
+  }
+  return { ok: true, status: response.status, text, fromCache: false };
+}
+
+
 function parseCSV(text) {
   const rows = [];
   let row = [], field = "", quoted = false;
@@ -861,8 +895,8 @@ async function loadGames() {
     `https://raw.githubusercontent.com/oladeeayo/open-matchday/master/data/${league}/`;
 
   try {
-    const response = await fetch(`${base}results_${season}.csv`);
-    if (token !== loadToken) return;
+    const response = await cachedFetchText(`${base}results_${season}.csv`, token);
+    if (token !== loadToken || response.stale) return;
 
     if (!response.ok) {
       throw new Error(
@@ -898,7 +932,7 @@ async function loadGames() {
       console.warn("Não foi possível obter a data da fonte:", metadataError);
     }
 
-    const csv = await response.text();
+    const csv = response.text;
     if (token !== loadToken) return;
     matches = parseCSV(csv).map(normalizeResult).filter(Boolean);
 
@@ -920,11 +954,11 @@ async function loadGames() {
 
     try {
       const fixtureResponse =
-        await fetch(`${base}fixtures_${season}.csv`);
-      if (token !== loadToken) return;
+        await cachedFetchText(`${base}fixtures_${season}.csv`, token);
+      if (token !== loadToken || fixtureResponse.stale) return;
 
       if (fixtureResponse.ok) {
-        const fixtureCSV = await fixtureResponse.text();
+        const fixtureCSV = fixtureResponse.text;
         if (token !== loadToken) return;
 
         fixturesData = parseCSV(fixtureCSV)
