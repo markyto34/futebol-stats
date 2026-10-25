@@ -47,7 +47,7 @@ test("numberValue handles Portuguese decimals and missing values", () => {
 
 test("parseCSV handles quoted commas, escaped quotes and blank lines", () => {
   const c = loadFunctions(["parseCSV"]);
-  const rows = c.parseCSV('home,away,note\\n"Porto, FC",Benfica,"said ""hello"""\\n\\n');
+  const rows = c.parseCSV('home,away,note\n"Porto, FC",Benfica,"said ""hello"""\n\n');
   assert.equal(rows.length, 1);
   assert.equal(rows[0].home, "Porto, FC");
   assert.equal(rows[0].note, 'said "hello"');
