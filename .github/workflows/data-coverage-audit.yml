@@ -1,0 +1,27 @@
+name: Open Matchday coverage audit
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Run source coverage audit
+        run: node scripts/audit-open-matchday.cjs data-coverage-report.csv
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: open-matchday-coverage-report
+          path: data-coverage-report.csv
+          if-no-files-found: error
+          retention-days: 30
