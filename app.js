@@ -363,6 +363,9 @@ function expectedGoalsForMatch(home, away) {
   const homeGames = recentTeamGames(home, "home", 10);
   const awayGames = recentTeamGames(away, "away", 10);
 
+  // Amostra mínima para evitar odds justas extremas no início da época.
+  if (homeGames.length < 5 || awayGames.length < 5) return null;
+
   const homeScored = average(homeGames.map(m => m.homeGoals));
   const homeConceded = average(homeGames.map(m => m.awayGoals));
   const awayScored = average(awayGames.map(m => m.awayGoals));
