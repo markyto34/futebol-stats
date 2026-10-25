@@ -365,6 +365,60 @@ function calculate1X2(home, away) {
   };
 }
 
+
+function poissonOverLine(lambda, line) {
+  if (lambda === null || !Number.isFinite(lambda) || lambda < 0) return null;
+  const threshold = Math.floor(line) + 1;
+  let cumulative = 0;
+  for (let k = 0; k < threshold; k++) cumulative += poissonProbability(k, lambda);
+  return Math.max(0, Math.min(1, 1 - cumulative));
+}
+
+function calculateCornerPrediction(home, away) {
+  if (!home || !away || home === away) return null;
+  const hs = teamStats(home, "home", 10);
+  const aa = teamStats(away, "away", 10);
+  const homeCornerMean = average([hs.cornersFor, aa.cornersAgainst]);
+  const awayCornerMean = average([aa.cornersFor, hs.cornersAgainst]);
+  if (homeCornerMean === null || awayCornerMean === null) return null;
+  const total = Math.max(0.1, Math.min(25, homeCornerMean + awayCornerMean));
+  const cornerGames = [...recentTeamGames(home, "home", 10), ...recentTeamGames(away, "away", 10)]
+    .filter(m => m.homeCorners !== null && m.awayCorners !== null).length;
+  const lines = [8.5, 9.5, 10.5, 11.5, 12.5];
+  return { homeCornerMean, awayCornerMean, total, cornerGames,
+    probabilities: lines.map(line => ({line, over: poissonOverLine(total, line)})) };
+}
+
+function renderCornerPrediction() {
+  const result = $("cornerResult");
+  const home = $("cornerHome")?.value;
+  const away = $("cornerAway")?.value;
+  if (!result || !home || !away) return;
+  if (home === away) { result.innerHTML = "<p>Escolhe duas equipas diferentes.</p>"; return; }
+  const p = calculateCornerPrediction(home, away);
+  if (!p) { result.innerHTML = "<p>Não existem dados de cantos suficientes para esta previsão.</p>"; return; }
+  const oddOver = Number($("cornerOddsOver95")?.value);
+  const oddUnder = Number($("cornerOddsUnder95")?.value);
+  const over = p.probabilities.find(x => x.line === 9.5).over;
+  let market = "<p class=\"muted\">Introduz as odds Over e Under 9,5 para comparar o mercado com o modelo.</p>";
+  if (oddOver > 1 && oddUnder > 1) {
+    const impliedOver = 1 / oddOver, impliedUnder = 1 / oddUnder;
+    const normOver = impliedOver / (impliedOver + impliedUnder);
+    const edge = over * oddOver - 1;
+    market = `<h3>Comparação Over/Under 9,5</h3><p>Probabilidade de mercado normalizada: ${fmt(normOver*100)}% Over. Modelo: ${fmt(over*100)}%. Odd justa Over: ${fmt(1/over,2)}; odd justa Under: ${fmt(1/(1-over),2)}.</p><p>Diferença matemática modelo × odd: ${fmt(edge*100)}%. Não é garantia de valor real.</p>`;
+  }
+  result.innerHTML = `<h3>${esc(home)} vs. ${esc(away)}</h3>
+  <div class="stats">
+    <div class="stat"><span>Cantos esperados — casa</span><strong>${fmt(p.homeCornerMean,2)}</strong></div>
+    <div class="stat"><span>Cantos esperados — fora</span><strong>${fmt(p.awayCornerMean,2)}</strong></div>
+    <div class="stat"><span>Total esperado</span><strong>${fmt(p.total,2)}</strong></div>
+  </div>
+  <div class="tablewrap"><table><thead><tr><th>Linha</th><th>Prob. Over estimada</th><th>Odd justa Over</th><th>Prob. Under estimada</th><th>Odd justa Under</th></tr></thead><tbody>
+  ${p.probabilities.map(x => `<tr><td>${x.line.toString().replace(".",",")}</td><td>${fmt(x.over*100)}%</td><td>${fmt(1/x.over,2)}</td><td>${fmt((1-x.over)*100)}%</td><td>${fmt(1/(1-x.over),2)}</td></tr>`).join("")}
+  </tbody></table></div>${market}
+  <p class="muted">Amostra conjunta de cantos: ${p.cornerGames} registos. Modelo Poisson simples baseado em médias casa/fora; não considera árbitro, onzes, contexto tático ou estado do marcador e não foi validado retrospetivamente.</p>`;
+}
+
 function renderX12Analysis() {
   const home = $("x12Home")?.value;
   const away = $("x12Away")?.value;
@@ -452,6 +506,17 @@ function renderBttsAnalysis() {
   const noPercent = p.bttsNo * 100;
   const yesOdds = p.bttsYes > 0 ? 1 / p.bttsYes : null;
   const noOdds = p.bttsNo > 0 ? 1 / p.bttsNo : null;
+  const marketYes = Number($("bttsOddsYes")?.value);
+  const marketNo = Number($("bttsOddsNo")?.value);
+  let marketHtml = "";
+  if (marketYes > 1 && marketNo > 1) {
+    const iy = 1 / marketYes, inn = 1 / marketNo;
+    const normYes = iy / (iy + inn);
+    const edge = p.bttsYes * marketYes - 1;
+    marketHtml = `<h3>Comparação com o mercado</h3><p>Probabilidade de mercado normalizada para Sim: ${fmt(normYes*100)}%. Modelo: ${fmt(yesPercent)}%. Diferença matemática modelo × odd Sim: ${fmt(edge*100)}%.</p>`;
+  } else {
+    marketHtml = "<p class=\"muted\">Introduz as odds Sim e Não para comparar com o mercado.</p>";
+  }
 
   let reliability = "Amostra reduzida";
   if (p.homeSample >= 8 && p.awaySample >= 8) reliability = "Amostra razoável";
@@ -467,6 +532,7 @@ function renderBttsAnalysis() {
       <div class="stat"><span>Odd justa — Sim</span><strong>${fmt(yesOdds, 2)}</strong></div>
       <div class="stat"><span>Odd justa — Não</span><strong>${fmt(noOdds, 2)}</strong></div>
     </div>
+    ${marketHtml}
     <p class="muted">${esc(reliability)}. Jogos considerados: ${p.homeSample} em casa e ${p.awaySample} fora.</p>
     <p class="muted">Modelo inicial de Poisson ajustado às médias da competição. Assume independência entre os golos das equipas e ainda não foi validado retrospetivamente. Não considera xG, onzes, lesões ou força individual dos adversários.</p>
   `;
@@ -603,6 +669,9 @@ function populateTeamSelectors(teams) {
   const homeSelect = $("bttsHome");
   const awaySelect = $("bttsAway");
   const analyseButton = $("analyseBtts");
+  const cornerHome = $("cornerHome");
+  const cornerAway = $("cornerAway");
+  const analyseCorners = $("analyseCorners");
 
   if (!teamSelect || !homeSelect || !awaySelect || !analyseButton) {
     throw new Error(
@@ -626,6 +695,15 @@ function populateTeamSelectors(teams) {
     x12Home.disabled = teams.length < 2;
     x12Away.disabled = teams.length < 2;
     $("analyseX12").disabled = teams.length < 2;
+  }
+
+  if (cornerHome && cornerAway) {
+    cornerHome.innerHTML = options;
+    cornerAway.innerHTML = options;
+    if (teams.length > 1) cornerAway.selectedIndex = 1;
+    cornerHome.disabled = teams.length < 2;
+    cornerAway.disabled = teams.length < 2;
+    if (analyseCorners) analyseCorners.disabled = teams.length < 2;
   }
 
   if (teams.length > 1) {
@@ -766,6 +844,7 @@ if (missingIds.length) {
 
   $("fixtureFilter").addEventListener("change", renderFixtures);
   $("analyseBtts").addEventListener("click", renderBttsAnalysis);
+  if ($("analyseCorners")) $("analyseCorners").addEventListener("click", renderCornerPrediction);
   if ($("analyseX12") && $("x12Home") && $("x12Away")) {
   $("analyseX12").addEventListener("click", renderX12Analysis);
   $("x12Home").addEventListener("change", () => {
@@ -790,6 +869,11 @@ if (missingIds.length) {
       if (alternative) $("bttsAway").value = alternative.value;
     }
   });
+
+  if ($("cornerHome") && $("cornerAway")) {
+    $("cornerHome").addEventListener("change", () => { if ($("cornerHome").value === $("cornerAway").value) { const alt = [...$("cornerAway").options].find(o => o.value !== $("cornerHome").value); if (alt) $("cornerAway").value = alt.value; } });
+    $("cornerAway").addEventListener("change", () => { if ($("cornerAway").value === $("cornerHome").value) { const alt = [...$("cornerHome").options].find(o => o.value !== $("cornerAway").value); if (alt) $("cornerHome").value = alt.value; } });
+  }
 
   $("bttsAway").addEventListener("change", () => {
     if ($("bttsAway").value === $("bttsHome").value) {
