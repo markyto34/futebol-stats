@@ -526,6 +526,16 @@ function expectedHT1X2(home, away) {
   const total=h+d+a;
   return {available:true,home:h/total,draw:d/total,away:a/total,lh,la,homeN:homeRows.length,awayN:awayRows.length,count:rows.length};
 }
+function renderX12HTMarket() {
+ const el=$("x12HtMarketResult");
+ if(!el) return;
+ const raw=["x12HtOddsHome","x12HtOddsDraw","x12HtOddsAway"].map(id=>String($(id)?.value??"").trim());
+ const odds=raw.map(numberValue);
+ if(!odds.every(o=>o!==null&&o>1)){el.innerHTML="<p class='muted'>Introduz três odds HT válidas, todas superiores a 1.</p>";return;}
+ const implied=odds.map(o=>1/o), total=implied.reduce((s,v)=>s+v,0), probs=implied.map(v=>v/total);
+ el.innerHTML=`<h3>Probabilidades implícitas das odds HT</h3><div class="tablewrap"><table><thead><tr><th>Resultado</th><th>Odd inserida</th><th>Prob. bruta</th><th>Prob. sem margem</th><th>Odd justa de mercado</th></tr></thead><tbody>${["Casa HT (1)","Empate HT (X)","Visitante HT (2)"].map((label,i)=>`<tr><td>${label}</td><td>${fmt(odds[i],2)}</td><td>${fmt(implied[i]*100)}%</td><td><strong>${fmt(probs[i]*100)}%</strong></td><td>${fmt(1/probs[i],2)}</td></tr>`).join("")}</tbody></table></div><p>Margem teórica aproximada: ${fmt((total-1)*100)}%.</p><p class="muted">Calculado apenas a partir das odds que inseriste; não é uma previsão independente.</p>`;
+}
+
 function renderX12HT() {
  const el=$("x12HtResult"), home=$("x12Home")?.value, away=$("x12Away")?.value;
  if(!el) return;
@@ -573,12 +583,28 @@ function renderX12Analysis() {
     return;
   }
   if (!p) {
+    const rawOdds = ["x12OddsHome", "x12OddsDraw", "x12OddsAway"].map(id => String($(id)?.value ?? "").trim());
+    const odds = rawOdds.map(numberValue);
+    const validMarket = odds.every(o => o !== null && o > 1);
+    if (validMarket) {
+      const implied = odds.map(o => 1 / o);
+      const total = implied.reduce((sum, v) => sum + v, 0);
+      const probs = implied.map(v => v / total);
+      result.innerHTML = `<h3>${esc(home)} vs. ${esc(away)}</h3>
+        <p>O modelo histórico não tem amostra suficiente, mas as odds pré-live que introduziste permitem calcular as probabilidades implícitas do mercado.</p>
+        <div class="tablewrap"><table><thead><tr><th>Resultado</th><th>Odd inserida</th><th>Prob. implícita bruta</th><th>Prob. mercado sem margem</th><th>Odd justa de mercado</th></tr></thead><tbody>
+        ${["Vitória casa (1)","Empate (X)","Vitória fora (2)"].map((label,i)=>`<tr><td>${label}</td><td>${fmt(odds[i],2)}</td><td>${fmt(implied[i]*100)}%</td><td><strong>${fmt(probs[i]*100)}%</strong></td><td>${fmt(1/probs[i],2)}</td></tr>`).join("")}
+        </tbody></table></div>
+        <p>Margem total aproximada do mercado: ${fmt((total-1)*100)}%. A probabilidade sem margem é calculada dividindo cada probabilidade implícita pela soma das três.</p>
+        <p class="muted">Isto é uma estimativa derivada das odds que inseriste, não uma previsão independente do resultado.</p>`;
+      return;
+    }
     const league = leagueGoalAverages();
     const homeGames = recentTeamGames(home, "home", 10);
     const awayGames = recentTeamGames(away, "away", 10);
     const insufficientSample = homeGames.length < 5 || awayGames.length < 5;
-    result.innerHTML = `<p>Não foi possível calcular uma previsão 1X2 fiável com os dados disponíveis.</p>
-      <p class="muted">Diagnóstico: ${esc(home)} — ${homeGames.length} jogos concluídos em casa; ${esc(away)} — ${awayGames.length} jogos concluídos fora. O modelo exige pelo menos 5 jogos no respetivo contexto casa/fora para cada equipa. ${insufficientSample ? "Amostra insuficiente: não serão apresentadas probabilidades nem odds justas, para evitar falsa precisão." : "Verifica se existem resultados válidos suficientes e se os nomes das equipas coincidem."} Médias da competição: casa ${fmt(league.home,2)} golos; visitante ${fmt(league.away,2)} golos. Esta regra reduz o risco de estimativas extremas, mas não substitui validação retrospetiva.</p>`;
+    result.innerHTML = `<p>Não foi possível calcular uma previsão histórica fiável. Podes, no entanto, inserir as três odds pré-live acima para obter as probabilidades implícitas do mercado, mesmo quando a amostra histórica é insuficiente.</p>
+      <p class="muted">Diagnóstico: ${esc(home)} — ${homeGames.length} jogos concluídos em casa; ${esc(away)} — ${awayGames.length} jogos concluídos fora. ${insufficientSample ? "Amostra insuficiente para o modelo histórico." : "Verifica os resultados disponíveis."} Médias da competição: casa ${fmt(league.home,2)} golos; visitante ${fmt(league.away,2)} golos.</p>`;
     return;
   }
 
@@ -839,6 +865,7 @@ function populateTeamSelectors(teams) {
   const homeSelect = $("bttsHome");
   const awaySelect = $("bttsAway");
   const analyseButton = $("analyseBtts");
+  $("calculateHtMarket")?.addEventListener("click", renderX12HTMarket);
   const cornerHome = $("cornerHome");
   const cornerAway = $("cornerAway");
   const analyseCorners = $("analyseCorners");
