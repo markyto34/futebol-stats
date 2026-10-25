@@ -2,7 +2,7 @@
 "use strict";
 
 // Chronological walk-forward backtest for open-matchday results CSV.
-// Usage: node scripts/backtest.cjs path/to/results.csv [--min-history=30]
+// Usage: node scripts/backtest.cjs path/to/results.csv|https://.../results.csv [--min-history=30]
 const fs = require("node:fs");
 
 function parseCSV(text) {
@@ -71,14 +71,23 @@ function predict(history, match) {
   const la=Math.max(.05,Math.min(5,aAtt*hDef/(baseA||1)));
   return {lh,la,p:probs(lh,la)};
 }
+async function main() {
 const file=process.argv[2];
 const minArg=process.argv.find(x=>x.startsWith("--min-history="));
 const minHistory=minArg ? Math.max(2,Number(minArg.split("=")[1])||30) : 30;
 if(!file) {
-  console.error("Uso: node scripts/backtest.cjs <results.csv> [--min-history=30]");
+  console.error("Uso: node scripts/backtest.cjs <results.csv|URL> [--min-history=30]");
   process.exit(2);
 }
-const rows=parseCSV(fs.readFileSync(file,"utf8"));
+let csvText;
+if (/^https?:\\/\\//i.test(file)) {
+  const response = await fetch(file);
+  if (!response.ok) throw new Error(`Falha ao obter CSV: HTTP ${response.status}`);
+  csvText = await response.text();
+} else {
+  csvText = fs.readFileSync(file,"utf8");
+}
+const rows=parseCSV(csvText);
 const games=rows.map(r=>({
  date:dateKey(val(r,["date","match_date","Date"])),
  home:val(r,["home","home_team","HomeTeam"]),
@@ -126,3 +135,6 @@ console.log(metric("Acerto do resultado mais provável",outcomes.map(Boolean).ma
 console.log(metric("MAE total de cantos (média histórica casa/fora)",cornerErrors));
 console.log(metric("Acerto classificação Over 8.5 cantos",cornerOver.map(x=>x?1:0),"1"));
 console.log("\nLimitações: o modelo de cantos é uma referência simples, não o modelo completo do site; sem odds não se mede ROI nem valor esperado. Resultados de uma época curta são instáveis.");
+
+}
+main().catch(error => { console.error(error.message || error); process.exit(1); });
