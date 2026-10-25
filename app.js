@@ -353,17 +353,17 @@ function poissonAtLeastOne(lambda) {
   return 1 - Math.exp(-lambda);
 }
 
-function expectedGoalsForMatch(home, away) {
+function expectedGoalsForMatch(home, away, sampleLimit = 20) {
   if (!home || !away || home === away) return null;
 
   const league = leagueGoalAverages();
   if (league.home === null || league.away === null ||
       league.home <= 0 || league.away <= 0) return null;
 
-  const homeGames = recentTeamGames(home, "home", 10);
-  const awayGames = recentTeamGames(away, "away", 10);
+  const homeGames = recentTeamGames(home, "home", sampleLimit);
+  const awayGames = recentTeamGames(away, "away", sampleLimit);
 
-  // Amostra mínima para evitar odds justas extremas no início da época.
+  // Usar uma amostra maior, mantendo apenas jogos no estádio relevante.
   if (homeGames.length < 5 || awayGames.length < 5) return null;
 
   const homeScored = average(homeGames.map(m => m.homeGoals));
@@ -407,8 +407,8 @@ function poissonProbability(k, lambda) {
   return p;
 }
 
-function calculate1X2(home, away) {
-  const expected = expectedGoalsForMatch(home, away);
+function calculate1X2(home, away, sampleLimit = 20) {
+  const expected = expectedGoalsForMatch(home, away, sampleLimit);
   if (!expected) return null;
   let pHome = 0, pDraw = 0, pAway = 0;
   for (let h = 0; h <= 10; h++) {
@@ -576,7 +576,8 @@ function renderX12Analysis() {
   }
   let p;
   try {
-    p = calculate1X2(home, away);
+    const selectedSample = $("x12Sample")?.value || "20";
+    p = calculate1X2(home, away, selectedSample === "all" ? "all" : Number(selectedSample));
   } catch (error) {
     console.error("Erro no cálculo 1X2:", error);
     result.innerHTML = `<p>O cálculo 1X2 encontrou um erro: ${esc(error?.message || error)}. Tenta novamente e envia esta mensagem.</p>`;
@@ -600,8 +601,9 @@ function renderX12Analysis() {
       return;
     }
     const league = leagueGoalAverages();
-    const homeGames = recentTeamGames(home, "home", 10);
-    const awayGames = recentTeamGames(away, "away", 10);
+    const selectedSample = $("x12Sample")?.value || "20";
+    const homeGames = recentTeamGames(home, "home", selectedSample === "all" ? "all" : Number(selectedSample));
+    const awayGames = recentTeamGames(away, "away", selectedSample === "all" ? "all" : Number(selectedSample));
     const insufficientSample = homeGames.length < 5 || awayGames.length < 5;
     result.innerHTML = `<p>Não foi possível calcular uma previsão histórica fiável. Podes, no entanto, inserir as três odds pré-live acima para obter as probabilidades implícitas do mercado, mesmo quando a amostra histórica é insuficiente.</p>
       <p class="muted">Diagnóstico: ${esc(home)} — ${homeGames.length} jogos concluídos em casa; ${esc(away)} — ${awayGames.length} jogos concluídos fora. ${insufficientSample ? "Amostra insuficiente para o modelo histórico." : "Verifica os resultados disponíveis."} Médias da competição: casa ${fmt(league.home,2)} golos; visitante ${fmt(league.away,2)} golos.</p>`;
@@ -657,8 +659,8 @@ function renderX12Analysis() {
       <div class="stat"><span>Modelo histórico — 2</span><strong>${fmt(historical[2]*100)}%</strong><span>Odd justa: ${fmt(1/historical[2],2)}</span></div>
     </div>
     ${comparisonHtml}
-    <p>Golos esperados pelo modelo: casa ${fmt(p.lambdaHome,2)} — visitante ${fmt(p.lambdaAway,2)}. Amostra: ${p.homeSample} jogos recentes da equipa da casa em casa e ${p.awaySample} da visitante fora.</p>
-    <p class="muted">O modelo histórico usa golos e distribuição de Poisson; não incorpora onzes, lesões, xG ou força individual detalhada. A combinação assume pesos iguais e não foi validada retrospetivamente.</p>
+    <p>Golos esperados pelo modelo: casa ${fmt(p.lambdaHome,2)} — visitante ${fmt(p.lambdaAway,2)}. Amostra usada: ${p.homeSample} jogos da equipa da casa em casa e ${p.awaySample} da visitante fora.</p>
+    <p class="muted">O modelo histórico usa golos e distribuição de Poisson; não incorpora onzes, lesões, xG ou força individual detalhada e ainda não foi validado retrospetivamente.</p>
   `;
 }
 
