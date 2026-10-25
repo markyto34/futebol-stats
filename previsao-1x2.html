@@ -10,7 +10,7 @@
 <body class="page-1x2">
 <header>
   <h1>⚽ Futebol Stats</h1>
-  <p>Probabilidades 1X2, odds justas e comparação com o mercado.</p>
+  <p>Probabilidades 1X2 com base nos resultados históricos.</p>
 
 <nav class="topnav" aria-label="Navegação principal">
   <a href="index.html" data-page="home">Visão geral</a>
@@ -70,24 +70,18 @@
 
 <section class="panel" id="x12-section">
   <h2 style="margin-top:0">Previsão 1X2 — Casa / Empate / Fora</h2>
-  <p>Primeiro, carrega os dados da competição no painel acima. Quando aparecer a mensagem com o número de resultados e equipas encontradas, as listas ficam disponíveis. Depois escolhe o confronto e, se quiseres, introduz as odds decimais atuais do mercado.</p>
+  <p>Primeiro, carrega os dados da competição no painel acima. Quando aparecer a mensagem com o número de resultados e equipas encontradas, as listas ficam disponíveis. Depois escolhe o confronto e consulta as probabilidades estimadas a partir do histórico.</p>
   <div class="controls">
     <div><label for="x12Home">Equipa da casa</label><select id="x12Home" disabled><option value="">Carrega os dados primeiro</option></select></div>
     <div><label for="x12Away">Equipa visitante</label><select id="x12Away" disabled><option value="">Carrega os dados primeiro</option></select></div>
   </div>
-  <div class="controls"><div><label for="x12Sample">Amostra histórica 1X2</label><select id="x12Sample"><option value="10">Últimos 10 jogos</option><option value="15">Últimos 15 jogos</option><option value="20" selected>Últimos 20 jogos</option><option value="all">Todos os jogos disponíveis</option></select></div></div><h3>Odds reais do mercado (opcional)</h3>
-  <div class="controls">
-    <div><label for="x12OddsHome">Odd vitória casa (1)</label><input id="x12OddsHome" type="text" inputmode="decimal" placeholder="Ex.: 2.10"></div>
-    <div><label for="x12OddsDraw">Odd empate (X)</label><input id="x12OddsDraw" type="text" inputmode="decimal" placeholder="Ex.: 3.30"></div>
-    <div><label for="x12OddsAway">Odd vitória visitante (2)</label><input id="x12OddsAway" type="text" inputmode="decimal" placeholder="Ex.: 3.60"></div>
-  </div>
-  <p><button id="analyseX12" disabled>Calcular previsão 1X2</button></p>
+  <div class="controls"><div><label for="x12Sample">Amostra histórica 1X2</label><select id="x12Sample"><option value="10">Últimos 10 jogos</option><option value="15">Últimos 15 jogos</option><option value="20" selected>Últimos 20 jogos</option><option value="all">Todos os jogos disponíveis</option></select></div></div><p><button id="analyseX12" disabled>Calcular previsão 1X2</button></p>
   <div id="x12Result" aria-live="polite"><p>Carrega os dados da competição para começar.</p></div>
 </section>
-<section class="panel" id="x12-ht-section"><h2 style="margin-top:0">Previsão 1X2 — 1.ª parte (HT)</h2><p>Introduz as odds pré-live de 1X2 ao intervalo. A aplicação calcula as probabilidades implícitas do mercado sem margem, mesmo que não haja histórico HT suficiente. A previsão histórica HT é apresentada separadamente quando os dados permitem.</p><div class="controls"><div><label for="x12HtOddsHome">Odd casa HT (1)</label><input id="x12HtOddsHome" type="text" inputmode="decimal" placeholder="Ex.: 2.80"></div><div><label for="x12HtOddsDraw">Odd empate HT (X)</label><input id="x12HtOddsDraw" type="text" inputmode="decimal" placeholder="Ex.: 1.90"></div><div><label for="x12HtOddsAway">Odd visitante HT (2)</label><input id="x12HtOddsAway" type="text" inputmode="decimal" placeholder="Ex.: 4.50"></div></div><p><button id="calculateHtMarket" type="button">Calcular probabilidades das odds HT</button></p><div id="x12HtMarketResult" aria-live="polite"></div><div id="x12HtResult" aria-live="polite"><p>Carrega os dados e escolhe as equipas para ver a previsão histórica HT.</p></div></section>
+<section class="panel" id="x12-ht-section"><h2 style="margin-top:0">Previsão 1X2 — 1.ª parte (HT)</h2><p>Estimativa estatística do resultado ao intervalo, quando existem dados históricos suficientes.</p><div id="x12HtResult" aria-live="polite"><p>Carrega os dados e escolhe as equipas para ver a previsão histórica HT.</p></div></section>
 <section class="panel" id="btts-section">
   <h2 style="margin-top:0">Análise — Ambas Marcam</h2>
-  <p>Escolhe duas equipas para estimar os golos esperados, as probabilidades BTTS e as odds justas teóricas.</p>
+  <p>Escolhe duas equipas para consultar as previsões estatísticas e os resultados históricos.</p>
   <div class="controls">
     <div>
       <label for="bttsHome">Equipa da casa</label>
