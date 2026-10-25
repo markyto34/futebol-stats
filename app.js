@@ -744,8 +744,7 @@ const requiredIds = [
   "league", "season", "team", "period", "load",
   "status", "fixtureFilter", "fixtureStatus", "fixtures",
   "stats", "teamTitle", "venueStats", "recent",
-  "bttsHome", "bttsAway", "analyseBtts", "bttsResult",
-  "x12Home", "x12Away", "analyseX12", "x12Result", "x12OddsHome", "x12OddsDraw", "x12OddsAway"
+  "bttsHome", "bttsAway", "analyseBtts", "bttsResult"
 ];
 
 const missingIds = requiredIds.filter(id => !$(id));
@@ -767,6 +766,7 @@ if (missingIds.length) {
 
   $("fixtureFilter").addEventListener("change", renderFixtures);
   $("analyseBtts").addEventListener("click", renderBttsAnalysis);
+  if ($("analyseX12") && $("x12Home") && $("x12Away")) {
   $("analyseX12").addEventListener("click", renderX12Analysis);
   $("x12Home").addEventListener("change", () => {
     if ($("x12Home").value === $("x12Away").value) {
@@ -780,6 +780,7 @@ if (missingIds.length) {
       if (alt) $("x12Home").value = alt.value;
     }
   });
+  }
 
   $("bttsHome").addEventListener("change", () => {
     if ($("bttsHome").value === $("bttsAway").value) {
