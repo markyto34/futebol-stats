@@ -622,13 +622,9 @@ function renderX12Analysis() {
     const overround = rawImplied.reduce((sum, value) => sum + value, 0);
     const market = rawImplied.map(value => value / overround);
 
-    // Pool geométrico 50/50: combina mercado e histórico sem deixar
-    // as escalas das duas fontes distorcerem a soma final.
-    const combined = historical.map((value, i) =>
-      Math.sqrt(Math.max(value, 0.000001) * Math.max(market[i], 0.000001))
-    );
-    const combinedTotal = combined.reduce((sum, value) => sum + value, 0);
-    finalProbs = combined.map(value => value / combinedTotal);
+    // As probabilidades derivadas das odds inseridas ficam separadas do modelo histórico.
+    // Não misturamos automaticamente o mercado com o modelo sem calibração validada.
+    finalProbs = market;
 
     const rows = labels.map((label, i) => {
       const modelEdge = historical[i] * marketOdds[i] - 1;
@@ -646,7 +642,7 @@ function renderX12Analysis() {
     comparisonHtml = `
       <h3>Fontes e probabilidades finais ajustadas</h3>
       <p>Margem teórica da casa: ${fmt((overround - 1) * 100)}%. A probabilidade de mercado é normalizada para retirar essa margem.</p>
-      <p>Combinação: 50% modelo histórico + 50% mercado, através de uma média geométrica normalizada. É uma regra inicial, não uma ponderação validada.</p>
+      <p>Probabilidade final apresentada = probabilidade de mercado normalizada a partir das odds inseridas. O modelo histórico é mostrado separadamente e não altera esta probabilidade.</p>
       <div class="tablewrap"><table><thead><tr><th>Resultado</th><th>Odd atual</th><th>Modelo histórico</th><th>Mercado sem margem</th><th>Prob. final ajustada</th><th>Odd justa final</th><th>Final − mercado</th><th>Edge do modelo vs. edge ajustado</th></tr></thead><tbody>${rows}</tbody></table></div>
       <p class="muted">O indicador compara a probabilidade final com a odd introduzida. Não garante lucro nem prova que exista vantagem real; isso exige testar o modelo com resultados históricos.</p>`;
   } else {
