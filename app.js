@@ -453,7 +453,7 @@ function calculateCornerPrediction(home, away) {
   const homeCornerSample = hs.cornerSample;
   const awayCornerSample = aa.cornerSample;
   const cornerGames = homeCornerSample + awayCornerSample;
-  // Exigir pelo menos 3 jogos completos por equipa para evitar estimativas extremas com amostras mínimas.
+  // Permitir desde 1 jogo válido; a interface avisa quando a amostra é pequena.
   const lowSample = homeCornerSample < 3 || awayCornerSample < 3;
   const lines = [8.5, 9.5, 10.5, 11.5, 12.5];
   return {
@@ -503,7 +503,7 @@ function expectedHT1X2(home, away) {
 function renderX12HT() {
  const el=$("x12HtResult"),home=$("x12Home")?.value,away=$("x12Away")?.value;if(!el)return;if(!home||!away){el.innerHTML="<p>Seleciona as equipas para calcular a previsão 1X2 ao intervalo.</p>";return;}
  const p=expectedHT1X2(home,away);if(!p.available){el.innerHTML=`<p>Não há dados HT suficientes para esta previsão.</p><p class="muted">Registos HT: ${p.count}. Amostra: ${esc(home)} (${p.homeN}) e ${esc(away)} (${p.awayN}).</p>`;return;}
- el.innerHTML=`<h3>${esc(home)} vs. ${esc(away)} — ao intervalo</h3><div class="stats"><div class="stat"><span>Casa (1 HT)</span><strong>${fmt(p.home*100)}%</strong></div><div class="stat"><span>Empate (X HT)</span><strong>${fmt(p.draw*100)}%</strong></div><div class="stat"><span>Visitante (2 HT)</span><strong>${fmt(p.away*100)}%</strong></div></div><p>Golos HT esperados: casa ${fmt(p.lh,2)} — visitante ${fmt(p.la,2)}. Amostra: ${p.homeN} jogos em casa e ${p.awayN} fora.</p><p class="muted">Estimativa histórica não validada retrospetivamente.</p>`;
+ el.innerHTML=`<h3>${esc(home)} vs. ${esc(away)} — ao intervalo</h3>${p.homeN<3||p.awayN<3?`<p class="muted">Amostra pequena: interpreta esta estimativa com cautela.</p>`:""}<div class="stats"><div class="stat"><span>Casa (1 HT)</span><strong>${fmt(p.home*100)}%</strong></div><div class="stat"><span>Empate (X HT)</span><strong>${fmt(p.draw*100)}%</strong></div><div class="stat"><span>Visitante (2 HT)</span><strong>${fmt(p.away*100)}%</strong></div></div><p>Golos HT esperados: casa ${fmt(p.lh,2)} — visitante ${fmt(p.la,2)}. Amostra: ${p.homeN} jogos em casa e ${p.awayN} fora.</p><p class="muted">Estimativa histórica não validada retrospetivamente.</p>`;
 }
 
 function renderCornersHT() {
