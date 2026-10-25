@@ -428,9 +428,20 @@ function renderX12Analysis() {
     result.innerHTML = "<p>Escolhe duas equipas diferentes.</p>";
     return;
   }
-  const p = calculate1X2(home, away);
+  let p;
+  try {
+    p = calculate1X2(home, away);
+  } catch (error) {
+    console.error("Erro no cálculo 1X2:", error);
+    result.innerHTML = `<p>O cálculo 1X2 encontrou um erro: ${esc(error?.message || error)}. Tenta novamente e envia esta mensagem.</p>`;
+    return;
+  }
   if (!p) {
-    result.innerHTML = "<p>Não existem dados suficientes para calcular esta previsão.</p>";
+    const league = leagueGoalAverages();
+    const homeGames = recentTeamGames(home, "home", 10);
+    const awayGames = recentTeamGames(away, "away", 10);
+    result.innerHTML = `<p>Não foi possível calcular a previsão com os dados disponíveis.</p>
+      <p class="muted">Diagnóstico: ${esc(home)} — ${homeGames.length} jogos em casa; ${esc(away)} — ${awayGames.length} jogos fora. Média de golos da competição: casa ${fmt(league.home,2)}, visitante ${fmt(league.away,2)}. Confirma se a época selecionada tem resultados suficientes para estas equipas.</p>`;
     return;
   }
 
