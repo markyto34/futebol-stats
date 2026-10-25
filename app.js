@@ -629,8 +629,9 @@ function estimateMatch(home, away) {
   const hHome = teamStats(home, "home", 10);
   const aAway = teamStats(away, "away", 10);
 
-  const homeGoals = average([hHome.goalsFor, aAway.goalsAgainst]);
-  const awayGoals = average([aAway.goalsFor, hHome.goalsAgainst]);
+  const goalModel = expectedGoalsForMatch(home, away);
+  const homeGoals = goalModel ? goalModel.lambdaHome : null;
+  const awayGoals = goalModel ? goalModel.lambdaAway : null;
   const homeCorners = average([hHome.cornersFor, aAway.cornersAgainst]);
   const awayCorners = average([aAway.cornersFor, hHome.cornersAgainst]);
 
@@ -641,7 +642,7 @@ function estimateMatch(home, away) {
 
   const totals = sample.map(m => m.homeCorners + m.awayCorners);
 
-  const btts = expectedGoalsForMatch(home, away);
+  const btts = goalModel;
 
   return {
     homeGoals,
@@ -897,13 +898,14 @@ async function loadGames() {
           .filter(Boolean);
 
         // Evita repetir jogos que já estejam nos resultados históricos.
-        const playedKeys = new Set(matches.map(m =>
-          `${m.home.toLowerCase()}|${m.away.toLowerCase()}`
-        ));
+        const fixtureKey = m => [
+          String(m.date || "").slice(0, 10),
+          String(m.home || "").trim().toLowerCase(),
+          String(m.away || "").trim().toLowerCase()
+        ].join("|");
 
-        fixturesData = fixturesData.filter(m =>
-          !playedKeys.has(`${m.home.toLowerCase()}|${m.away.toLowerCase()}`)
-        );
+        const playedKeys = new Set(matches.map(fixtureKey));
+        fixturesData = fixturesData.filter(m => !playedKeys.has(fixtureKey(m)));
       }
     } catch (e) {
       console.warn("Calendário indisponível:", e);
@@ -931,13 +933,20 @@ async function loadGames() {
     $("bttsResult").innerHTML =
       `<p>${esc(error.message)}</p>`;
 
-    $("bttsHome").disabled = true;
-    $("bttsAway").disabled = true;
-    $("analyseBtts").disabled = true;
-    $("x12Home").disabled = true;
-    $("x12Away").disabled = true;
-    $("analyseX12").disabled = true;
-    $("x12Result").innerHTML = `<p>Não foi possível ativar a previsão porque os dados não foram carregados. Verifica a mensagem acima e tenta carregar novamente.</p>`;
+    [
+      "bttsHome", "bttsAway", "analyseBtts",
+      "x12Home", "x12Away", "analyseX12",
+      "cornerHome", "cornerAway", "analyseCorners",
+      "goalHome", "goalAway", "analyseGoals"
+    ].forEach(id => {
+      const element = $(id);
+      if (element) element.disabled = true;
+    });
+    const x12Result = $("x12Result");
+    if (x12Result) {
+      x12Result.innerHTML =
+        "<p>Não foi possível ativar a previsão porque os dados não foram carregados. Verifica a mensagem acima e tenta carregar novamente.</p>";
+    }
 
   } finally {
     button.disabled = false;
@@ -960,6 +969,8 @@ if (missingIds.length) {
     "Erro no HTML: faltam os elementos " + missingIds.join(", ");
 } else {
   $("load").addEventListener("click", loadGames);
+  $("league").addEventListener("change", loadGames);
+  $("season").addEventListener("change", loadGames);
 
   $("team").addEventListener("change", () => {
     if (matches.length) renderStats($("team").value);
