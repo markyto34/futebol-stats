@@ -123,6 +123,25 @@ function toFixture(item) {
   };
 }
 
+async function getFixtureStatistics(fixture, key) {
+  const fixtureId = fixture.fixture?.id;
+  if (!fixtureId) return fixture;
+  const payload = await apiGet(
+    "/fixtures/statistics?fixture=" + encodeURIComponent(String(fixtureId)),
+    key
+  );
+  const rows = payload.response || [];
+  const homeId = fixture.teams?.home?.id;
+  const awayId = fixture.teams?.away?.id;
+  const homeRow = rows.find((row) => row.team?.id === homeId);
+  const awayRow = rows.find((row) => row.team?.id === awayId);
+  return {
+    ...fixture,
+    _homeStats: homeRow?.statistics || [],
+    _awayStats: awayRow?.statistics || [],
+  };
+}
+
 async function getFixtures(url, key) {
   const leagueKey = url.searchParams.get("league") || "";
   const leagueId = LEAGUES[leagueKey];
@@ -140,7 +159,6 @@ async function getFixtures(url, key) {
   const requestedStatus = url.searchParams.get("status");
   if (requestedStatus && ["NS", "FT", "LIVE"].includes(requestedStatus)) {
     if (requestedStatus === "LIVE") {
-      // API-Football uses several short codes for live matches.
       apiUrl.searchParams.set("live", "all");
     } else {
       apiUrl.searchParams.set("status", requestedStatus);
@@ -148,7 +166,16 @@ async function getFixtures(url, key) {
   }
 
   const payload = await apiGet(apiUrl.pathname + apiUrl.search, key);
-  const fixtures = (payload.response || []).map(toFixture);
+  const rawFixtures = payload.response || [];
+  // Statistics require one extra API request per fixture; cap at 20 recent played/live games.
+  const eligible = rawFixtures
+    .filter((item) => ["FT", "AET", "PEN", "1H", "HT", "2H", "ET", "BT", "P", "LIVE"].includes(item.fixture?.status?.short))
+    .sort((a, b) => (b.fixture?.timestamp || 0) - (a.fixture?.timestamp || 0))
+    .slice(0, 20);
+  const enriched = await Promise.all(eligible.map((item) => getFixtureStatistics(item, key)));
+  const statsById = new Map(enriched.map((item) => [item.fixture?.id, item]));
+  const fixtures = rawFixtures.map((item) => toFixture(statsById.get(item.fixture?.id) || item));
+
   return {
     source: "API-Football",
     league: leagueKey,
@@ -156,6 +183,8 @@ async function getFixtures(url, key) {
     season,
     results: fixtures,
     count: fixtures.length,
+    statisticsFetchedFor: enriched.length,
+    statisticsLimit: 20,
     paging: payload.paging || null,
     errors: payload.errors || null,
   };
