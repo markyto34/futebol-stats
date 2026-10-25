@@ -1,0 +1,129 @@
+
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Futebol Stats — Ambas Marcam</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body class="page-btts">
+<header>
+  <h1>⚽ Futebol Stats</h1>
+  <p>Probabilidades BTTS, golos esperados e odds justas teóricas.</p>
+
+<nav class="topnav" aria-label="Navegação principal">
+  <a href="index.html" data-page="home">Visão geral</a>
+  <a href="cantos.html" data-page="cantos">Cantos</a>
+  <a href="btts.html" data-page="btts">Ambas Marcam</a>
+  <a href="jogos.html" data-page="jogos">Próximos jogos</a>
+</nav>
+</header>
+
+<main>
+<section class="panel" id="filters">
+  <div class="controls">
+    <div><label for="league">Competição</label>
+      <select id="league">
+        <option value="POR_1_primeira-liga">Portugal — Primeira Liga</option>
+        <option value="ENG_1_premier-league">Inglaterra — Premier League</option>
+        <option value="ESP_1_la-liga">Espanha — La Liga</option>
+        <option value="ITA_1_serie-a">Itália — Serie A</option>
+        <option value="GER_1_bundesliga">Alemanha — Bundesliga</option>
+        <option value="FRA_1_ligue-1">França — Ligue 1</option>
+        <option value="NED_1_eredivisie">Países Baixos — Eredivisie</option>
+        <option value="BRA_1_serie-a">Brasil — Brasileirão</option>
+        <option value="UEFA_1_champions-league">Liga dos Campeões</option>
+        <option value="BEL_1_pro-league">Bélgica — Pro League</option>
+        <option value="TUR_1_super-lig">Turquia — Süper Lig</option>
+        <option value="ENG_2_championship">Inglaterra — Championship</option>
+        <option value="USA_1_mls">Estados Unidos — MLS</option>
+      </select>
+    </div>
+    <div><label for="season">Época</label>
+      
+<select id="season">
+  <option value="2627" selected>2026/27</option>
+  <option value="2526">2025/26</option>
+  <option value="2425">2024/25</option>
+  <option value="2324">2023/24</option>
+</select>
+
+    </div>
+    <div><label for="team">Equipa para estatísticas</label>
+      <select id="team"><option value="">Carrega os dados primeiro</option></select>
+    </div>
+    <div><label for="period">Amostra estatística</label>
+      <select id="period">
+        <option value="5">Últimos 5 jogos</option>
+        <option value="10" selected>Últimos 10 jogos</option>
+        <option value="all">Todos os jogos</option>
+      </select>
+    </div>
+  </div>
+  <p><button id="load">Carregar dados da competição</button></p>
+  <div id="status" role="status">Seleciona a competição e carrega os dados.</div>
+</section>
+
+<section class="panel" id="btts-section">
+  <h2 style="margin-top:0">Análise — Ambas Marcam</h2>
+  <p>Escolhe duas equipas para estimar os golos esperados, as probabilidades BTTS e as odds justas teóricas.</p>
+  <div class="controls">
+    <div>
+      <label for="bttsHome">Equipa da casa</label>
+      <select id="bttsHome" disabled><option value="">Carrega os dados primeiro</option></select>
+    </div>
+    <div>
+      <label for="bttsAway">Equipa visitante</label>
+      <select id="bttsAway" disabled><option value="">Carrega os dados primeiro</option></select>
+    </div>
+  </div>
+  <p><button id="analyseBtts" disabled>Analisar confronto</button></p>
+  <div id="bttsResult" aria-live="polite">
+    <p>Carrega os dados da competição para começar.</p>
+  </div>
+</section>
+
+<section id="fixtures-section">
+  <h2>Próximos jogos e estimativas</h2>
+  <div class="controls">
+    <div><label for="fixtureFilter">Período</label>
+      <select id="fixtureFilter">
+        <option value="7" selected>Próximos 7 dias</option>
+        <option value="14">Próximos 14 dias</option>
+        <option value="30">Próximos 30 dias</option>
+        <option value="all">Todos os jogos disponíveis</option>
+      </select>
+    </div>
+  </div>
+  <div id="fixtureStatus" role="status">Carrega os dados para procurar jogos.</div>
+  <div id="fixtures" class="matchlist"></div>
+</section>
+
+<section id="stats-section">
+  <h2 id="teamTitle">Estatísticas da equipa</h2>
+  <div class="stats" id="stats"></div>
+</section>
+
+<section id="venue-section">
+  <h2>Desempenho em casa e fora</h2>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Local</th><th>Jogos</th><th>Cantos a favor</th><th>Cantos contra</th><th>Total cantos</th><th>Over 9,5</th></tr></thead>
+    <tbody id="venueStats"><tr><td colspan="6">Carrega os dados para começar.</td></tr></tbody>
+  </table></div>
+</section>
+
+<section id="recent-section">
+  <h2>Jogos recentes da equipa</h2>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Data</th><th>Casa</th><th>Resultado</th><th>Fora</th><th>Cantos</th><th>Total</th></tr></thead>
+    <tbody id="recent"><tr><td colspan="6">Sem dados carregados.</td></tr></tbody>
+  </table></div>
+</section>
+
+<p><small>Fonte: <a href="https://github.com/oladeeayo/open-matchday" target="_blank" rel="noopener">open-matchday</a>. As estimativas são estatísticas históricas, não garantias. A disponibilidade dos dados depende da competição e época selecionadas.</small></p>
+</main>
+
+<script src="app.js" defer></script>
+</body>
+</html>

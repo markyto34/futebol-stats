@@ -1,0 +1,849 @@
+
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Futebol Stats</title>
+<style>
+:root{color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:#0b1120;color:#e8edf7;font-family:Arial,sans-serif}
+header{padding:22px 16px;background:#111c30;border-bottom:1px solid #26344d}
+h1{margin:0;color:#67e8a5}
+h2{font-size:19px;margin-top:25px}
+h3{font-size:16px;color:#67e8a5}
+p,.muted{color:#aab7cc;font-size:13px;line-height:1.5}
+main{max-width:1100px;margin:auto;padding:16px}
+.panel,.stat,.matchcard{background:#131e31;border:1px solid #283650;border-radius:12px;padding:14px}
+.controls,.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:12px}
+label{display:block;font-size:12px;color:#aab7cc;margin-bottom:7px}
+select,button{width:100%;padding:12px;border-radius:8px;border:1px solid #3a4b66;background:#0c1628;color:white;font-size:14px}
+button{background:#147d52;border:0;font-weight:bold;cursor:pointer}
+button:disabled{opacity:.5;cursor:not-allowed}
+.stat strong{display:block;font-size:23px;margin-top:8px;color:#67e8a5;overflow-wrap:anywhere}
+.stat span{font-size:12px;color:#aab7cc}
+.tablewrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{text-align:left;padding:10px 8px;border-bottom:1px solid #29364b;white-space:nowrap}
+th{color:#67e8a5}
+#status,#fixtureStatus{margin:14px 0;color:#f5cc77}
+section{margin-bottom:20px}
+.matchlist{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:12px}
+.matchcard h3{margin-top:0}
+.teams{font-size:16px;font-weight:bold;line-height:1.7;margin:12px 0}
+.predgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.pred{background:#0c1628;border-radius:8px;padding:10px;min-width:0}
+.pred span{display:block;font-size:12px;color:#aab7cc}
+.pred strong{display:block;font-size:18px;margin-top:5px;color:#67e8a5;overflow-wrap:anywhere}
+.pill{display:inline-block;padding:4px 8px;border-radius:20px;background:#24354b;font-size:11px}
+small{color:#9cabc2}
+a{color:#67e8a5}
+</style>
+</head>
+<body>
+<header>
+  <h1>⚽ Futebol Stats</h1>
+  <p>Estatísticas de golos, cantos, linhas Over e estimativas para próximos jogos.</p>
+</header>
+
+<main>
+<section class="panel">
+  <div class="controls">
+    <div><label for="league">Competição</label>
+      <select id="league">
+        <option value="POR_1_primeira-liga">Portugal — Primeira Liga</option>
+        <option value="ENG_1_premier-league">Inglaterra — Premier League</option>
+        <option value="ESP_1_la-liga">Espanha — La Liga</option>
+        <option value="ITA_1_serie-a">Itália — Serie A</option>
+        <option value="GER_1_bundesliga">Alemanha — Bundesliga</option>
+        <option value="FRA_1_ligue-1">França — Ligue 1</option>
+        <option value="NED_1_eredivisie">Países Baixos — Eredivisie</option>
+        <option value="BRA_1_serie-a">Brasil — Brasileirão</option>
+        <option value="UEFA_1_champions-league">Liga dos Campeões</option>
+        <option value="BEL_1_pro-league">Bélgica — Pro League</option>
+        <option value="TUR_1_super-lig">Turquia — Süper Lig</option>
+        <option value="ENG_2_championship">Inglaterra — Championship</option>
+        <option value="USA_1_mls">Estados Unidos — MLS</option>
+      </select>
+    </div>
+    <div><label for="season">Época</label>
+      
+<select id="season">
+  <option value="2627" selected>2026/27</option>
+  <option value="2526">2025/26</option>
+  <option value="2425">2024/25</option>
+  <option value="2324">2023/24</option>
+</select>
+
+    </div>
+    <div><label for="team">Equipa para estatísticas</label>
+      <select id="team"><option value="">Carrega os dados primeiro</option></select>
+    </div>
+    <div><label for="period">Amostra estatística</label>
+      <select id="period">
+        <option value="5">Últimos 5 jogos</option>
+        <option value="10" selected>Últimos 10 jogos</option>
+        <option value="all">Todos os jogos</option>
+      </select>
+    </div>
+  </div>
+  <p><button id="load">Carregar dados da competição</button></p>
+  <div id="status" role="status">Seleciona a competição e carrega os dados.</div>
+</section>
+
+<section class="panel">
+  <h2 style="margin-top:0">Análise — Ambas Marcam</h2>
+  <p>Escolhe duas equipas para estimar os golos esperados, as probabilidades BTTS e as odds justas teóricas.</p>
+  <div class="controls">
+    <div>
+      <label for="bttsHome">Equipa da casa</label>
+      <select id="bttsHome" disabled><option value="">Carrega os dados primeiro</option></select>
+    </div>
+    <div>
+      <label for="bttsAway">Equipa visitante</label>
+      <select id="bttsAway" disabled><option value="">Carrega os dados primeiro</option></select>
+    </div>
+  </div>
+  <p><button id="analyseBtts" disabled>Analisar confronto</button></p>
+  <div id="bttsResult" aria-live="polite">
+    <p>Carrega os dados da competição para começar.</p>
+  </div>
+</section>
+
+<section>
+  <h2>Próximos jogos e estimativas</h2>
+  <div class="controls">
+    <div><label for="fixtureFilter">Período</label>
+      <select id="fixtureFilter">
+        <option value="7" selected>Próximos 7 dias</option>
+        <option value="14">Próximos 14 dias</option>
+        <option value="30">Próximos 30 dias</option>
+        <option value="all">Todos os jogos disponíveis</option>
+      </select>
+    </div>
+  </div>
+  <div id="fixtureStatus" role="status">Carrega os dados para procurar jogos.</div>
+  <div id="fixtures" class="matchlist"></div>
+</section>
+
+<section>
+  <h2 id="teamTitle">Estatísticas da equipa</h2>
+  <div class="stats" id="stats"></div>
+</section>
+
+<section>
+  <h2>Desempenho em casa e fora</h2>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Local</th><th>Jogos</th><th>Cantos a favor</th><th>Cantos contra</th><th>Total cantos</th><th>Over 9,5</th></tr></thead>
+    <tbody id="venueStats"><tr><td colspan="6">Carrega os dados para começar.</td></tr></tbody>
+  </table></div>
+</section>
+
+<section>
+  <h2>Jogos recentes da equipa</h2>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Data</th><th>Casa</th><th>Resultado</th><th>Fora</th><th>Cantos</th><th>Total</th></tr></thead>
+    <tbody id="recent"><tr><td colspan="6">Sem dados carregados.</td></tr></tbody>
+  </table></div>
+</section>
+
+<p><small>Fonte: <a href="https://github.com/oladeeayo/open-matchday" target="_blank" rel="noopener">open-matchday</a>. As estimativas são estatísticas históricas, não garantias. A disponibilidade dos dados depende da competição e época selecionadas.</small></p>
+</main>
+
+<script>
+"use strict";
+
+const $ = id => document.getElementById(id);
+let matches = [];
+let fixturesData = [];
+
+function parseCSV(text) {
+  const rows = [];
+  let row = [], field = "", quoted = false;
+
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+
+    if (quoted) {
+      if (c === '"' && text[i + 1] === '"') {
+        field += '"';
+        i++;
+      } else if (c === '"') {
+        quoted = false;
+      } else {
+        field += c;
+      }
+    } else {
+      if (c === '"') quoted = true;
+      else if (c === ",") {
+        row.push(field);
+        field = "";
+      } else if (c === "\n") {
+        row.push(field);
+        rows.push(row);
+        row = [];
+        field = "";
+      } else if (c !== "\r") {
+        field += c;
+      }
+    }
+  }
+
+  if (field || row.length) {
+    row.push(field);
+    rows.push(row);
+  }
+
+  if (!rows.length) return [];
+
+  const headers = rows.shift().map(x => x.trim().replace(/^\uFEFF/, ""));
+
+  return rows.filter(r => r.some(v => v.trim() !== "")).map(r => {
+    const obj = {};
+    headers.forEach((h, i) => obj[h] = (r[i] || "").trim());
+    return obj;
+  });
+}
+
+function getValue(obj, names) {
+  for (const name of names) {
+    if (obj[name] !== undefined && obj[name] !== "") return obj[name];
+  }
+
+  const keys = Object.keys(obj);
+  for (const name of names) {
+    const found = keys.find(k => k.toLowerCase() === name.toLowerCase());
+    if (found && obj[found] !== "") return obj[found];
+  }
+
+  return "";
+}
+
+function numberValue(value) {
+  if (value === null || value === undefined || value === "") return null;
+  const n = Number(String(value).replace(",", "."));
+  return Number.isFinite(n) ? n : null;
+}
+
+function esc(value) {
+  return String(value ?? "").replace(/[&<>"']/g, c => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
+  })[c]);
+}
+
+function normalizeResult(row) {
+  const home = getValue(row, ["home", "home_team", "HomeTeam"]);
+  const away = getValue(row, ["away", "away_team", "AwayTeam"]);
+  const homeGoals = numberValue(getValue(row, [
+    "ft_home", "home_score", "home_goals", "FTHG"
+  ]));
+  const awayGoals = numberValue(getValue(row, [
+    "ft_away", "away_score", "away_goals", "FTAG"
+  ]));
+
+  if (!home || !away || homeGoals === null || awayGoals === null) {
+    return null;
+  }
+
+  return {
+    date: getValue(row, ["date", "match_date", "Date"]),
+    home,
+    away,
+    homeGoals,
+    awayGoals,
+    homeCorners: numberValue(getValue(row, [
+      "home_corners", "HomeCorners", "HC", "home_corner"
+    ])),
+    awayCorners: numberValue(getValue(row, [
+      "away_corners", "AwayCorners", "AC", "away_corner"
+    ])),
+    played: true
+  };
+}
+
+function normalizeFixture(row) {
+  const home = getValue(row, ["home", "home_team", "HomeTeam"]);
+  const away = getValue(row, ["away", "away_team", "AwayTeam"]);
+  if (!home || !away) return null;
+
+  return {
+    date: getValue(row, ["date", "match_date", "Date"]),
+    time: getValue(row, ["time", "Time"]),
+    home,
+    away
+  };
+}
+
+function dateValue(value) {
+  if (!value) return null;
+  const d = new Date(value);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
+function average(values) {
+  const valid = values.filter(v =>
+    v !== null && v !== undefined && Number.isFinite(v)
+  );
+  return valid.length
+    ? valid.reduce((sum, v) => sum + v, 0) / valid.length
+    : null;
+}
+
+function fmt(value, digits = 1) {
+  return value === null || value === undefined || !Number.isFinite(value)
+    ? "N/D"
+    : value.toFixed(digits).replace(".", ",");
+}
+
+function percent(values, predicate) {
+  const valid = values.filter(v => v !== null && Number.isFinite(v));
+  return valid.length
+    ? 100 * valid.filter(predicate).length / valid.length
+    : null;
+}
+
+function recentTeamGames(team, venue = "all", limit = 10) {
+  const list = matches.filter(m =>
+    m.played &&
+    (m.home === team || m.away === team) &&
+    (venue === "all" ||
+      (venue === "home" && m.home === team) ||
+      (venue === "away" && m.away === team))
+  );
+
+  list.sort((a, b) => {
+    const da = dateValue(a.date), db = dateValue(b.date);
+    return (db?.getTime() || 0) - (da?.getTime() || 0);
+  });
+
+  return limit === "all" ? list : list.slice(0, Number(limit));
+}
+
+function teamStats(team, venue = "all", limit = 10) {
+  const games = recentTeamGames(team, venue, limit);
+  const scored = [], conceded = [];
+  const cornersFor = [], cornersAgainst = [], totalCorners = [];
+
+  let over85 = 0, over95 = 0, over105 = 0, over115 = 0, over125 = 0;
+
+  for (const m of games) {
+    const isHome = m.home === team;
+    scored.push(isHome ? m.homeGoals : m.awayGoals);
+    conceded.push(isHome ? m.awayGoals : m.homeGoals);
+
+    if (m.homeCorners !== null && m.awayCorners !== null) {
+      const own = isHome ? m.homeCorners : m.awayCorners;
+      const opp = isHome ? m.awayCorners : m.homeCorners;
+      const total = own + opp;
+
+      cornersFor.push(own);
+      cornersAgainst.push(opp);
+      totalCorners.push(total);
+
+      if (total >= 9) over85++;
+      if (total >= 10) over95++;
+      if (total >= 11) over105++;
+      if (total >= 12) over115++;
+      if (total >= 13) over125++;
+    }
+  }
+
+  const n = totalCorners.length;
+
+  return {
+    games: games.length,
+    goalsFor: average(scored),
+    goalsAgainst: average(conceded),
+    cornersFor: average(cornersFor),
+    cornersAgainst: average(cornersAgainst),
+    totalCorners: average(totalCorners),
+    over85: n ? 100 * over85 / n : null,
+    over95: n ? 100 * over95 / n : null,
+    over105: n ? 100 * over105 / n : null,
+    over115: n ? 100 * over115 / n : null,
+    over125: n ? 100 * over125 / n : null
+  };
+}
+
+function renderStats(team) {
+  if (!team) return;
+
+  const period = $("period").value;
+  const all = teamStats(team, "all", period);
+  const home = teamStats(team, "home", period);
+  const away = teamStats(team, "away", period);
+
+  $("teamTitle").textContent = "Estatísticas — " + team;
+
+  const cards = [
+    ["Jogos analisados", all.games],
+    ["Golos marcados / jogo", fmt(all.goalsFor)],
+    ["Golos sofridos / jogo", fmt(all.goalsAgainst)],
+    ["Cantos a favor / jogo", fmt(all.cornersFor)],
+    ["Cantos contra / jogo", fmt(all.cornersAgainst)],
+    ["Média total de cantos", fmt(all.totalCorners)],
+    ["Over 8,5 cantos", all.over85 === null ? "N/D" : fmt(all.over85) + "%"],
+    ["Over 9,5 cantos", all.over95 === null ? "N/D" : fmt(all.over95) + "%"],
+    ["Over 10,5 cantos", all.over105 === null ? "N/D" : fmt(all.over105) + "%"],
+    ["Over 11,5 cantos", all.over115 === null ? "N/D" : fmt(all.over115) + "%"],
+    ["Over 12,5 cantos", all.over125 === null ? "N/D" : fmt(all.over125) + "%"]
+  ];
+
+  $("stats").innerHTML = cards.map(([label, value]) =>
+    `<div class="stat"><span>${esc(label)}</span><strong>${esc(value)}</strong></div>`
+  ).join("");
+
+  $("venueStats").innerHTML = [
+    ["Casa", home],
+    ["Fora", away],
+    ["Total", all]
+  ].map(([label, s]) =>
+    `<tr><td>${label}</td><td>${s.games}</td>
+    <td>${fmt(s.cornersFor)}</td><td>${fmt(s.cornersAgainst)}</td>
+    <td>${fmt(s.totalCorners)}</td>
+    <td>${s.over95 === null ? "N/D" : fmt(s.over95) + "%"}</td></tr>`
+  ).join("");
+
+  const recent = recentTeamGames(team, "all", period);
+
+  $("recent").innerHTML = recent.length ? recent.map(m => {
+    const total = m.homeCorners !== null && m.awayCorners !== null
+      ? m.homeCorners + m.awayCorners : null;
+
+    return `<tr><td>${esc(m.date || "N/D")}</td>
+    <td>${esc(m.home)}</td><td>${m.homeGoals} - ${m.awayGoals}</td>
+    <td>${esc(m.away)}</td>
+    <td>${m.homeCorners === null || m.awayCorners === null
+      ? "N/D" : m.homeCorners + " - " + m.awayCorners}</td>
+    <td>${total === null ? "N/D" : total}</td></tr>`;
+  }).join("") : `<tr><td colspan="6">Não existem jogos para esta equipa.</td></tr>`;
+}
+
+/* Médias gerais da competição e ajustamento para amostras pequenas. */
+function leagueGoalAverages() {
+  return {
+    home: average(matches.map(m => m.homeGoals)),
+    away: average(matches.map(m => m.awayGoals))
+  };
+}
+
+function shrinkAverage(value, count, baseline, prior = 5) {
+  if (baseline === null || !Number.isFinite(baseline)) return value;
+  if (value === null || !Number.isFinite(value)) return baseline;
+  return (value * count + baseline * prior) / (count + prior);
+}
+
+function poissonAtLeastOne(lambda) {
+  if (lambda === null || !Number.isFinite(lambda) || lambda < 0) {
+    return null;
+  }
+  return 1 - Math.exp(-lambda);
+}
+
+function expectedGoalsForMatch(home, away) {
+  if (!home || !away || home === away) return null;
+
+  const league = leagueGoalAverages();
+  if (league.home === null || league.away === null ||
+      league.home <= 0 || league.away <= 0) return null;
+
+  const homeGames = recentTeamGames(home, "home", 10);
+  const awayGames = recentTeamGames(away, "away", 10);
+
+  const homeScored = average(homeGames.map(m => m.homeGoals));
+  const homeConceded = average(homeGames.map(m => m.awayGoals));
+  const awayScored = average(awayGames.map(m => m.awayGoals));
+  const awayConceded = average(awayGames.map(m => m.homeGoals));
+
+  const homeAttack = shrinkAverage(homeScored, homeGames.length, league.home);
+  const homeDefence = shrinkAverage(homeConceded, homeGames.length, league.away);
+  const awayAttack = shrinkAverage(awayScored, awayGames.length, league.away);
+  const awayDefence = shrinkAverage(awayConceded, awayGames.length, league.home);
+
+  if ([homeAttack, homeDefence, awayAttack, awayDefence].some(
+    v => v === null || !Number.isFinite(v)
+  )) return null;
+
+  const lambdaHome = homeAttack * awayDefence / league.home;
+  const lambdaAway = awayAttack * homeDefence / league.away;
+
+  const h = Math.max(0.05, Math.min(5, lambdaHome));
+  const a = Math.max(0.05, Math.min(5, lambdaAway));
+
+  const bttsYes = poissonAtLeastOne(h) * poissonAtLeastOne(a);
+  const bttsNo = 1 - bttsYes;
+
+  return {
+    lambdaHome: h,
+    lambdaAway: a,
+    bttsYes,
+    bttsNo,
+    homeSample: homeGames.length,
+    awaySample: awayGames.length
+  };
+}
+
+function renderBttsAnalysis() {
+  const homeSelect = $("bttsHome");
+  const awaySelect = $("bttsAway");
+  const result = $("bttsResult");
+
+  if (!homeSelect || !awaySelect || !result) {
+    $("status").textContent =
+      "Erro interno: falta um elemento do painel BTTS no HTML.";
+    return;
+  }
+
+  const home = homeSelect.value;
+  const away = awaySelect.value;
+
+  if (!home || !away) {
+    result.innerHTML = "<p>Seleciona as duas equipas.</p>";
+    return;
+  }
+
+  if (home === away) {
+    result.innerHTML = "<p>Escolhe duas equipas diferentes.</p>";
+    return;
+  }
+
+  const p = expectedGoalsForMatch(home, away);
+
+  if (!p) {
+    result.innerHTML = "<p>Não existem dados suficientes para calcular esta previsão.</p>";
+    return;
+  }
+
+  const yesPercent = p.bttsYes * 100;
+  const noPercent = p.bttsNo * 100;
+  const yesOdds = p.bttsYes > 0 ? 1 / p.bttsYes : null;
+  const noOdds = p.bttsNo > 0 ? 1 / p.bttsNo : null;
+
+  let reliability = "Amostra reduzida";
+  if (p.homeSample >= 8 && p.awaySample >= 8) reliability = "Amostra razoável";
+  if (p.homeSample >= 10 && p.awaySample >= 10) reliability = "10 jogos por equipa";
+
+  result.innerHTML = `
+    <h3>${esc(home)} vs. ${esc(away)}</h3>
+    <div class="stats">
+      <div class="stat"><span>Golos esperados — casa</span><strong>${fmt(p.lambdaHome, 2)}</strong></div>
+      <div class="stat"><span>Golos esperados — fora</span><strong>${fmt(p.lambdaAway, 2)}</strong></div>
+      <div class="stat"><span>Ambas Marcam — Sim</span><strong>${fmt(yesPercent)}%</strong></div>
+      <div class="stat"><span>Ambas Marcam — Não</span><strong>${fmt(noPercent)}%</strong></div>
+      <div class="stat"><span>Odd justa — Sim</span><strong>${fmt(yesOdds, 2)}</strong></div>
+      <div class="stat"><span>Odd justa — Não</span><strong>${fmt(noOdds, 2)}</strong></div>
+    </div>
+    <p class="muted">${esc(reliability)}. Jogos considerados: ${p.homeSample} em casa e ${p.awaySample} fora.</p>
+    <p class="muted">Modelo inicial de Poisson ajustado às médias da competição. Assume independência entre os golos das equipas e ainda não foi validado retrospetivamente. Não considera xG, onzes, lesões ou força individual dos adversários.</p>
+  `;
+}
+
+function estimateMatch(home, away) {
+  const hHome = teamStats(home, "home", 10);
+  const aAway = teamStats(away, "away", 10);
+
+  const homeGoals = average([hHome.goalsFor, aAway.goalsAgainst]);
+  const awayGoals = average([aAway.goalsFor, hHome.goalsAgainst]);
+  const homeCorners = average([hHome.cornersFor, aAway.cornersAgainst]);
+  const awayCorners = average([aAway.cornersFor, hHome.cornersAgainst]);
+
+  const sample = [
+    ...recentTeamGames(home, "home", 10),
+    ...recentTeamGames(away, "away", 10)
+  ].filter(m => m.homeCorners !== null && m.awayCorners !== null);
+
+  const totals = sample.map(m => m.homeCorners + m.awayCorners);
+
+  const btts = expectedGoalsForMatch(home, away);
+
+  return {
+    homeGoals,
+    awayGoals,
+    totalGoals: homeGoals !== null && awayGoals !== null
+      ? homeGoals + awayGoals : null,
+    totalCorners: homeCorners !== null && awayCorners !== null
+      ? homeCorners + awayCorners : null,
+    over95: percent(totals, n => n >= 10),
+    over105: percent(totals, n => n >= 11),
+    cornerSample: totals.length,
+    btts
+  };
+}
+
+function renderFixtures() {
+  const container = $("fixtures");
+  const status = $("fixtureStatus");
+  const filter = $("fixtureFilter").value;
+
+  if (!fixturesData.length) {
+    container.innerHTML = "";
+    status.textContent =
+      "Não foram encontrados jogos futuros no calendário disponível.";
+    return;
+  }
+
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+
+  let list = fixturesData.filter(m => {
+    const d = dateValue(m.date);
+    if (!d) return false;
+
+    d.setHours(0, 0, 0, 0);
+
+    if (d < now) return false;
+    if (filter === "all") return true;
+
+    const limit = new Date(now);
+    limit.setDate(limit.getDate() + Number(filter));
+    return d <= limit;
+  });
+
+  list.sort((a, b) =>
+    (dateValue(a.date)?.getTime() || 0) -
+    (dateValue(b.date)?.getTime() || 0)
+  );
+
+  if (!list.length) {
+    container.innerHTML = "";
+    status.textContent =
+      "Não há jogos com datas válidas dentro do período selecionado.";
+    return;
+  }
+
+  status.textContent = `${list.length} jogo(s) encontrado(s).`;
+
+  container.innerHTML = list.map(m => {
+    const p = estimateMatch(m.home, m.away);
+    const b = p.btts;
+
+    return `<article class="matchcard">
+      <span class="pill">${esc(m.date || "Data por confirmar")} ${esc(m.time || "")}</span>
+      <div class="teams">${esc(m.home)}<br>vs.<br>${esc(m.away)}</div>
+
+      <div class="predgrid">
+        <div class="pred"><span>Golos — casa</span><strong>${fmt(p.homeGoals)}</strong></div>
+        <div class="pred"><span>Golos — fora</span><strong>${fmt(p.awayGoals)}</strong></div>
+        <div class="pred"><span>Total estimado de golos</span><strong>${fmt(p.totalGoals)}</strong></div>
+        <div class="pred"><span>Total estimado de cantos</span><strong>${fmt(p.totalCorners)}</strong></div>
+        <div class="pred"><span>Histórico Over 9,5 cantos</span><strong>${p.over95 === null ? "N/D" : fmt(p.over95) + "%"}</strong></div>
+        <div class="pred"><span>Histórico Over 10,5 cantos</span><strong>${p.over105 === null ? "N/D" : fmt(p.over105) + "%"}</strong></div>
+        <div class="pred"><span>Ambas Marcam — Sim</span><strong>${b ? fmt(b.bttsYes * 100) + "%" : "N/D"}</strong></div>
+        <div class="pred"><span>Ambas Marcam — Não</span><strong>${b ? fmt(b.bttsNo * 100) + "%" : "N/D"}</strong></div>
+      </div>
+
+      <p class="muted">Amostra de cantos: ${p.cornerSample} jogos. A previsão BTTS usa até 10 jogos em casa da equipa da casa e 10 fora da visitante. São estimativas iniciais, ainda sem validação retrospetiva.</p>
+      <p><button type="button" class="analyseFixture">Analisar este confronto</button></p>
+    </article>`;
+  }).join("");
+
+  // Liga cada botão ao painel de análise do confronto correspondente.
+  const buttons = container.querySelectorAll(".analyseFixture");
+  buttons.forEach((button, index) => {
+    button.addEventListener("click", () => {
+      const match = list[index];
+      if (!match) return;
+
+      const homeSelect = $("bttsHome");
+      const awaySelect = $("bttsAway");
+
+      if (!homeSelect || !awaySelect) {
+        status.textContent = "Erro: não foi encontrado o painel BTTS.";
+        return;
+      }
+
+      homeSelect.value = match.home;
+      awaySelect.value = match.away;
+      renderBttsAnalysis();
+
+      $("bttsResult").scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+      });
+    });
+  });
+}
+
+function populateTeamSelectors(teams) {
+  const teamSelect = $("team");
+  const homeSelect = $("bttsHome");
+  const awaySelect = $("bttsAway");
+  const analyseButton = $("analyseBtts");
+
+  if (!teamSelect || !homeSelect || !awaySelect || !analyseButton) {
+    throw new Error(
+      "Falta um elemento HTML: confirma os IDs team, bttsHome, bttsAway e analyseBtts."
+    );
+  }
+
+  const options = teams.map(t =>
+    `<option value="${esc(t)}">${esc(t)}</option>`
+  ).join("");
+
+  teamSelect.innerHTML = options;
+  homeSelect.innerHTML = options;
+  awaySelect.innerHTML = options;
+
+  if (teams.length > 1) {
+    awaySelect.selectedIndex = 1;
+  }
+
+  homeSelect.disabled = teams.length < 2;
+  awaySelect.disabled = teams.length < 2;
+  analyseButton.disabled = teams.length < 2;
+}
+
+async function loadGames() {
+  const league = $("league").value;
+  const season = $("season").value;
+  const button = $("load");
+
+  button.disabled = true;
+  $("status").textContent = "A carregar resultados históricos...";
+  $("fixtureStatus").textContent = "A procurar o calendário...";
+  $("fixtures").innerHTML = "";
+  $("stats").innerHTML = "";
+  $("bttsResult").innerHTML = "<p>A preparar análise...</p>";
+  matches = [];
+  fixturesData = [];
+
+  const base =
+    `https://raw.githubusercontent.com/oladeeayo/open-matchday/master/data/${league}/`;
+
+  try {
+    const response = await fetch(`${base}results_${season}.csv`);
+
+    if (!response.ok) {
+      throw new Error(
+        `Não foi possível obter os resultados (HTTP ${response.status}).`
+      );
+    }
+
+    const csv = await response.text();
+    matches = parseCSV(csv).map(normalizeResult).filter(Boolean);
+
+    if (!matches.length) {
+      throw new Error(
+        "O ficheiro foi carregado, mas não foram reconhecidos resultados válidos."
+      );
+    }
+
+    const teams = [...new Set(matches.flatMap(m => [m.home, m.away]))]
+      .sort((a, b) => a.localeCompare(b));
+
+    populateTeamSelectors(teams);
+
+    $("status").textContent =
+      `${matches.length} resultados carregados; ${teams.length} equipas encontradas.`;
+
+    try {
+      const fixtureResponse =
+        await fetch(`${base}fixtures_${season}.csv`);
+
+      if (fixtureResponse.ok) {
+        const fixtureCSV = await fixtureResponse.text();
+
+        fixturesData = parseCSV(fixtureCSV)
+          .map(normalizeFixture)
+          .filter(Boolean);
+
+        // Evita repetir jogos que já estejam nos resultados históricos.
+        const playedKeys = new Set(matches.map(m =>
+          `${m.home.toLowerCase()}|${m.away.toLowerCase()}`
+        ));
+
+        fixturesData = fixturesData.filter(m =>
+          !playedKeys.has(`${m.home.toLowerCase()}|${m.away.toLowerCase()}`)
+        );
+      }
+    } catch (e) {
+      console.warn("Calendário indisponível:", e);
+    }
+
+    renderStats($("team").value);
+    renderFixtures();
+
+    if (teams.length > 1) {
+      renderBttsAnalysis();
+    }
+
+  } catch (error) {
+    console.error(error);
+    $("status").textContent = `Erro: ${error.message}`;
+    $("fixtureStatus").textContent =
+      "Não foi possível carregar os dados.";
+
+    $("stats").innerHTML = "";
+    $("venueStats").innerHTML =
+      '<tr><td colspan="6">Sem dados disponíveis.</td></tr>';
+    $("recent").innerHTML =
+      '<tr><td colspan="6">Sem dados disponíveis.</td></tr>';
+    $("fixtures").innerHTML = "";
+    $("bttsResult").innerHTML =
+      `<p>${esc(error.message)}</p>`;
+
+    $("bttsHome").disabled = true;
+    $("bttsAway").disabled = true;
+    $("analyseBtts").disabled = true;
+
+  } finally {
+    button.disabled = false;
+  }
+}
+
+// Verifica os elementos principais antes de ativar os eventos.
+const requiredIds = [
+  "league", "season", "team", "period", "load",
+  "status", "fixtureFilter", "fixtureStatus", "fixtures",
+  "stats", "teamTitle", "venueStats", "recent",
+  "bttsHome", "bttsAway", "analyseBtts", "bttsResult"
+];
+
+const missingIds = requiredIds.filter(id => !$(id));
+
+if (missingIds.length) {
+  console.error("Elementos HTML em falta:", missingIds);
+  $("status").textContent =
+    "Erro no HTML: faltam os elementos " + missingIds.join(", ");
+} else {
+  $("load").addEventListener("click", loadGames);
+
+  $("team").addEventListener("change", () => {
+    if (matches.length) renderStats($("team").value);
+  });
+
+  $("period").addEventListener("change", () => {
+    if (matches.length) renderStats($("team").value);
+  });
+
+  $("fixtureFilter").addEventListener("change", renderFixtures);
+  $("analyseBtts").addEventListener("click", renderBttsAnalysis);
+
+  $("bttsHome").addEventListener("change", () => {
+    if ($("bttsHome").value === $("bttsAway").value) {
+      const alternative = [...$("bttsAway").options].find(
+        option => option.value !== $("bttsHome").value
+      );
+      if (alternative) $("bttsAway").value = alternative.value;
+    }
+  });
+
+  $("bttsAway").addEventListener("change", () => {
+    if ($("bttsAway").value === $("bttsHome").value) {
+      const alternative = [...$("bttsHome").options].find(
+        option => option.value !== $("bttsAway").value
+      );
+      if (alternative) $("bttsHome").value = alternative.value;
+    }
+  });
+
+  loadGames();
+}
+</script>
+</body>
+</html>
