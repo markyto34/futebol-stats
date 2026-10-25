@@ -210,6 +210,8 @@ function teamStats(team, venue = "all", limit = 10) {
 
   return {
     games: games.length,
+    // Número real de jogos com dados completos de cantos usados nestas médias.
+    cornerSample: n,
     goalsFor: average(scored),
     goalsAgainst: average(conceded),
     cornersFor: average(cornersFor),
@@ -388,11 +390,17 @@ function calculateCornerPrediction(home, away) {
   const awayCornerMean = average([aa.cornersFor, hs.cornersAgainst]);
   if (homeCornerMean === null || awayCornerMean === null) return null;
   const total = Math.max(0.1, Math.min(25, homeCornerMean + awayCornerMean));
-  const cornerGames = [...recentTeamGames(home, "home", 10), ...recentTeamGames(away, "away", 10)]
-    .filter(m => m.homeCorners !== null && m.awayCorners !== null).length;
+  // Cada média usa apenas jogos com ambos os campos de cantos disponíveis.
+  // Expomos as amostras separadamente para não confundir jogos de golos com jogos de cantos.
+  const homeCornerSample = hs.cornerSample;
+  const awayCornerSample = aa.cornerSample;
+  const cornerGames = homeCornerSample + awayCornerSample;
   const lines = [8.5, 9.5, 10.5, 11.5, 12.5];
-  return { homeCornerMean, awayCornerMean, total, cornerGames,
-    probabilities: lines.map(line => ({line, over: poissonOverLine(total, line)})) };
+  return {
+    homeCornerMean, awayCornerMean, total,
+    homeCornerSample, awayCornerSample, cornerGames,
+    probabilities: lines.map(line => ({line, over: poissonOverLine(total, line)}))
+  };
 }
 
 function renderCornerPrediction() {
@@ -422,7 +430,7 @@ function renderCornerPrediction() {
   <div class="tablewrap"><table><thead><tr><th>Linha</th><th>Prob. Over estimada</th><th>Odd justa Over</th><th>Prob. Under estimada</th><th>Odd justa Under</th></tr></thead><tbody>
   ${p.probabilities.map(x => `<tr><td>${x.line.toString().replace(".",",")}</td><td>${fmt(x.over*100)}%</td><td>${fmt(1/x.over,2)}</td><td>${fmt((1-x.over)*100)}%</td><td>${fmt(1/(1-x.over),2)}</td></tr>`).join("")}
   </tbody></table></div>${market}
-  <p class="muted">Amostra conjunta de cantos: ${p.cornerGames} registos. Modelo Poisson simples baseado em médias casa/fora; não considera árbitro, onzes, contexto tático ou estado do marcador e não foi validado retrospetivamente.</p>`;
+  <p class="muted">Amostra de cantos com dados completos: ${p.homeCornerSample} jogos da equipa da casa (em casa) + ${p.awayCornerSample} jogos da visitante (fora), máximo 10 por equipa; total de registos usados nas médias: ${p.cornerGames}. Os jogos sem dados completos de cantos ficam excluídos destas médias. Modelo Poisson simples; não considera árbitro, onzes, contexto tático ou estado do marcador e não foi validado retrospetivamente.</p>`;
 }
 
 function expectedHT1X2(home, away) {
