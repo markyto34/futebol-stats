@@ -75,7 +75,7 @@
     <div><label for="x12Home">Equipa da casa</label><select id="x12Home" disabled><option value="">Carrega os dados primeiro</option></select></div>
     <div><label for="x12Away">Equipa visitante</label><select id="x12Away" disabled><option value="">Carrega os dados primeiro</option></select></div>
   </div>
-  <h3>Odds reais do mercado (opcional)</h3>
+  <div class="controls"><div><label for="x12Sample">Amostra histórica 1X2</label><select id="x12Sample"><option value="10">Últimos 10 jogos</option><option value="15">Últimos 15 jogos</option><option value="20" selected>Últimos 20 jogos</option><option value="all">Todos os jogos disponíveis</option></select></div></div><h3>Odds reais do mercado (opcional)</h3>
   <div class="controls">
     <div><label for="x12OddsHome">Odd vitória casa (1)</label><input id="x12OddsHome" type="text" inputmode="decimal" placeholder="Ex.: 2.10"></div>
     <div><label for="x12OddsDraw">Odd empate (X)</label><input id="x12OddsDraw" type="text" inputmode="decimal" placeholder="Ex.: 3.30"></div>
@@ -144,6 +144,6 @@
 <p><small>Fonte: <a href="https://github.com/oladeeayo/open-matchday" target="_blank" rel="noopener">open-matchday</a>. As estimativas são estatísticas históricas, não garantias. A disponibilidade dos dados depende da competição e época selecionadas.</small></p>
 </main>
 
-<script src="app.js?v=20261025oddsinput2" defer></script>
+<script src="app.js?v=20261025sample20" defer></script>
 </body>
 </html>
