@@ -592,22 +592,23 @@ function renderX12Analysis() {
     finalProbs = combined.map(value => value / combinedTotal);
 
     const rows = labels.map((label, i) => {
-      const edge = finalProbs[i] * marketOdds[i] - 1;
+      const modelEdge = historical[i] * marketOdds[i] - 1;
+      const adjustedEdge = finalProbs[i] * marketOdds[i] - 1;
       const difference = (finalProbs[i] - market[i]) * 100;
-      const signal = edge > 0.02 ? "Acima da odd de equilíbrio" :
-        edge < -0.02 ? "Abaixo da odd de equilíbrio" : "Próximo do equilíbrio";
+      const signal = modelEdge > 0.02 ? "Modelo acima da odd de equilíbrio" :
+        modelEdge < -0.02 ? "Modelo abaixo da odd de equilíbrio" : "Modelo próximo do equilíbrio";
       return `<tr><td>${label}</td><td>${fmt(marketOdds[i],2)}</td>
         <td>${fmt(historical[i]*100)}%</td><td>${fmt(market[i]*100)}%</td>
         <td><strong>${fmt(finalProbs[i]*100)}%</strong></td>
         <td>${fmt(1/finalProbs[i],2)}</td><td>${difference > 0 ? "+" : ""}${fmt(difference)} p.p.</td>
-        <td>${signal} (${edge > 0 ? "+" : ""}${fmt(edge*100)}%)</td></tr>`;
+        <td>${signal}; edge histórico: ${modelEdge > 0 ? "+" : ""}${fmt(modelEdge*100)}%; edge ajustado: ${adjustedEdge > 0 ? "+" : ""}${fmt(adjustedEdge*100)}%</td></tr>`;
     }).join("");
 
     comparisonHtml = `
       <h3>Fontes e probabilidades finais ajustadas</h3>
       <p>Margem teórica da casa: ${fmt((overround - 1) * 100)}%. A probabilidade de mercado é normalizada para retirar essa margem.</p>
       <p>Combinação: 50% modelo histórico + 50% mercado, através de uma média geométrica normalizada. É uma regra inicial, não uma ponderação validada.</p>
-      <div class="tablewrap"><table><thead><tr><th>Resultado</th><th>Odd atual</th><th>Modelo histórico</th><th>Mercado sem margem</th><th>Prob. final ajustada</th><th>Odd justa final</th><th>Final − mercado</th><th>Leitura matemática</th></tr></thead><tbody>${rows}</tbody></table></div>
+      <div class="tablewrap"><table><thead><tr><th>Resultado</th><th>Odd atual</th><th>Modelo histórico</th><th>Mercado sem margem</th><th>Prob. final ajustada</th><th>Odd justa final</th><th>Final − mercado</th><th>Edge do modelo vs. edge ajustado</th></tr></thead><tbody>${rows}</tbody></table></div>
       <p class="muted">O indicador compara a probabilidade final com a odd introduzida. Não garante lucro nem prova que exista vantagem real; isso exige testar o modelo com resultados históricos.</p>`;
   } else {
     comparisonHtml = `<p class="muted">Para mostrar a tabela final, são necessárias três odds decimais válidas, todas superiores a 1. Os valores lidos agora foram: 1 = "${esc(rawOdds[0] || "vazio")}" (${marketOdds[0] === null ? "inválida" : fmt(marketOdds[0], 2)}); X = "${esc(rawOdds[1] || "vazio")}" (${marketOdds[1] === null ? "inválida" : fmt(marketOdds[1], 2)}); 2 = "${esc(rawOdds[2] || "vazio")}" (${marketOdds[2] === null ? "inválida" : fmt(marketOdds[2], 2)}). Usa, por exemplo, 2,10 / 3,30 / 3,60.</p>`;
