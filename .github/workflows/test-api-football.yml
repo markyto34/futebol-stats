@@ -26,18 +26,15 @@ jobs:
             --header "x-apisports-key: ${API_FOOTBALL_KEY}" \
             "https://v3.football.api-sports.io/status")
 
-          printf '%s' "$response" | python - <<'PY'
-          import json
-          import sys
-
-          data = json.load(sys.stdin)
+          RESPONSE_JSON="$response" python -c '
+          import json, os
+          data = json.loads(os.environ["RESPONSE_JSON"])
           errors = data.get("errors")
           if errors:
               print("A API devolveu erros:", json.dumps(errors, ensure_ascii=False))
               raise SystemExit(1)
-
           account = data.get("response", {}).get("requests", {})
           print("Ligação à API-Football estabelecida.")
           print("Pedidos usados hoje:", account.get("current", "não indicado"))
           print("Limite diário:", account.get("limit_day", "não indicado"))
-          PY
+          '
