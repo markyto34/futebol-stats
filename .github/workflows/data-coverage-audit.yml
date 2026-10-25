@@ -2,6 +2,10 @@ name: Open Matchday coverage audit
 
 on:
   workflow_dispatch:
+  push:
+    paths:
+      - 'scripts/audit-open-matchday.cjs'
+      - '.github/workflows/data-coverage-audit.yml'
 
 permissions:
   contents: read
