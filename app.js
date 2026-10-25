@@ -133,9 +133,27 @@ function normalizeFixture(row) {
   };
 }
 
+function normalizeDateKey(value) {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+  let m = raw.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})/);
+  if (m) return m[1] + "-" + m[2].padStart(2, "0") + "-" + m[3].padStart(2, "0");
+  m = raw.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})/);
+  if (m) {
+    // Datas com ano no fim são interpretadas no formato português DD/MM/YYYY.
+    const day = Number(m[1]), month = Number(m[2]), year = Number(m[3]);
+    if (day >= 1 && day <= 31 && month >= 1 && month <= 12) {
+      return String(year).padStart(4, "0") + "-" + String(month).padStart(2, "0") + "-" + String(day).padStart(2, "0");
+    }
+  }
+  const parsed = new Date(raw);
+  return Number.isNaN(parsed.getTime()) ? raw.toLowerCase() : parsed.toISOString().slice(0, 10);
+}
+
 function dateValue(value) {
   if (!value) return null;
-  const d = new Date(value);
+  const normalized = normalizeDateKey(value);
+  const d = new Date(normalized);
   return Number.isNaN(d.getTime()) ? null : d;
 }
 
@@ -915,7 +933,7 @@ async function loadGames() {
 
         // Evita repetir jogos que já estejam nos resultados históricos.
         const fixtureKey = m => [
-          String(m.date || "").slice(0, 10),
+          normalizeDateKey(m.date),
           String(m.home || "").trim().toLowerCase(),
           String(m.away || "").trim().toLowerCase()
         ].join("|");
