@@ -105,6 +105,8 @@ function normalizeResult(row) {
     away,
     homeGoals,
     awayGoals,
+    htHomeGoals: numberValue(getValue(row, ["ht_home", "HTHG", "home_ht_goals"])),
+    htAwayGoals: numberValue(getValue(row, ["ht_away", "HTAG", "away_ht_goals"])),
     homeCorners: numberValue(getValue(row, [
       "home_corners", "HomeCorners", "HC", "home_corner"
     ])),
