@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Futebol Stats — Over/Under Golos</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body class="page-golos">
+<header>
+  <h1>⚽ Futebol Stats</h1>
+  <p>Previsão de golos: probabilidades Over/Under, golos esperados e odds justas.</p>
+  <nav class="topnav" aria-label="Navegação principal">
+    <a href="index.html" data-page="home">Visão geral</a>
+    <a href="cantos.html" data-page="cantos">Cantos</a>
+    <a href="btts.html" data-page="btts">Ambas Marcam</a>
+    <a href="jogos.html" data-page="jogos">Próximos jogos</a>
+    <a href="previsao-1x2.html" data-page="1x2">Previsão 1X2</a>
+    <a href="golos.html" data-page="golos">Over/Under Golos</a>
+  </nav>
+</header>
+<main>
+<section class="panel" id="filters">
+  <div class="controls">
+    <div><label for="league">Competição</label>
+      <select id="league">
+        <option value="POR_1_primeira-liga">Portugal — Primeira Liga</option>
+        <option value="ENG_1_premier-league">Inglaterra — Premier League</option>
+        <option value="ESP_1_la-liga">Espanha — La Liga</option>
+        <option value="ITA_1_serie-a">Itália — Serie A</option>
+        <option value="GER_1_bundesliga">Alemanha — Bundesliga</option>
+        <option value="FRA_1_ligue-1">França — Ligue 1</option>
+        <option value="NED_1_eredivisie">Países Baixos — Eredivisie</option>
+        <option value="BRA_1_serie-a">Brasil — Brasileirão</option>
+        <option value="UEFA_1_champions-league">Liga dos Campeões</option>
+        <option value="BEL_1_pro-league">Bélgica — Pro League</option>
+        <option value="TUR_1_super-lig">Turquia — Süper Lig</option>
+        <option value="ENG_2_championship">Inglaterra — Championship</option>
+        <option value="USA_1_mls">Estados Unidos — MLS</option>
+      </select>
+    </div>
+    <div><label for="season">Época</label>
+      <select id="season">
+        <option value="2627" selected>2026/27</option>
+        <option value="2526">2025/26</option>
+        <option value="2425">2024/25</option>
+        <option value="2324">2023/24</option>
+      </select>
+    </div>
+    <div><label for="team">Equipa para estatísticas</label><select id="team"><option value="">A carregar dados...</option></select></div>
+    <div><label for="period">Amostra estatística</label>
+      <select id="period"><option value="5">Últimos 5 jogos</option><option value="10" selected>Últimos 10 jogos</option><option value="all">Todos os jogos</option></select>
+    </div>
+  </div>
+  <p><button id="load">Carregar dados da competição</button></p>
+  <div id="status" role="status">A carregar dados da competição...</div>
+</section>
+
+<section class="panel" id="goals-section">
+  <h2 style="margin-top:0">Previsão Over / Under — Golos</h2>
+  <p>Seleciona as equipas para estimar golos esperados e probabilidades de Over/Under. As odds são teóricas e o modelo ainda não foi validado retrospetivamente.</p>
+  <div class="controls">
+    <div><label for="goalHome">Equipa da casa</label><select id="goalHome" disabled><option value="">Carrega os dados primeiro</option></select></div>
+    <div><label for="goalAway">Equipa visitante</label><select id="goalAway" disabled><option value="">Carrega os dados primeiro</option></select></div>
+  </div>
+  <div class="controls">
+    <div><label for="goalOddsOver25">Odd Over 2,5 (opcional)</label><input id="goalOddsOver25" inputmode="decimal" placeholder="Ex.: 1,85"></div>
+    <div><label for="goalOddsUnder25">Odd Under 2,5 (opcional)</label><input id="goalOddsUnder25" inputmode="decimal" placeholder="Ex.: 1,95"></div>
+  </div>
+  <p><button id="analyseGoals" disabled>Calcular previsão de golos</button></p>
+  <div id="goalsResult" aria-live="polite"><p>Carrega os dados da competição para começar.</p></div>
+</section>
+
+<section class="panel" id="btts-section" style="display:none">
+  <div class="controls">
+    <div><label for="bttsHome">Equipa da casa</label><select id="bttsHome" disabled><option value="">A carregar</option></select></div>
+    <div><label for="bttsAway">Equipa visitante</label><select id="bttsAway" disabled><option value="">A carregar</option></select></div>
+  </div>
+  <button id="analyseBtts" disabled>Analisar</button><div id="bttsResult"></div>
+</section>
+<section id="fixtures-section" style="display:none"><select id="fixtureFilter"><option value="7">7 dias</option></select><div id="fixtureStatus"></div><div id="fixtures"></div></section>
+<section id="stats-section" style="display:none"><h2 id="teamTitle"></h2><div id="stats"></div></section>
+<section id="venue-section" style="display:none"><table><tbody id="venueStats"></tbody></table></section>
+<section id="recent-section" style="display:none"><table><tbody id="recent"></tbody></table></section>
+</main>
+<script src="app.js?v=20261025golos1" defer></script>
+<script src="golos.js?v=20261025golos1" defer></script>
+</body>
+</html>
