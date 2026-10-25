@@ -141,7 +141,7 @@
       const prob = poissonProbability(i, p.home) * poissonProbability(j, p.away);
       if (i > j) h += prob; else if (i === j) d += prob; else a += prob;
     }
-    output.innerHTML = `<h3>${home} vs. ${away} — intervalo</h3>
+    output.innerHTML = `<h3>${esc(home)} vs. ${esc(away)} — intervalo</h3>
       <div class="stats">
         <div class="stat"><span>Golos HT esperados — casa</span><strong>${p.home.toFixed(2).replace(".", ",")}</strong></div>
         <div class="stat"><span>Golos HT esperados — fora</span><strong>${p.away.toFixed(2).replace(".", ",")}</strong></div>
