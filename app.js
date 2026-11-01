@@ -827,10 +827,13 @@ async function loadGames() {
   ])].filter(Boolean).sort((a, b) => a.localeCompare(b));
 
   if (!teams.length) {
-    throw new Error([
+    $("status").textContent = [
       resultsMessage || "Não foram encontrados resultados históricos.",
       "Também não foi encontrado um calendário utilizável para esta competição e época."
-    ].join(" "));
+    ].join(" ");
+    $("fixtureStatus").textContent = "Sem calendário disponível.";
+    button.disabled = false;
+    return;
   }
 
   populateTeamSelectors(teams);
@@ -854,6 +857,7 @@ async function loadGames() {
   else if (teams.length > 1) {
     $("bttsResult").innerHTML = "<p>Há equipas no calendário, mas faltam resultados históricos para calcular probabilidades. Não serão inventadas estimativas.</p>";
   }
+  button.disabled = false;
 }
  
 // Verifica os elementos principais antes de ativar os eventos.
