@@ -77,13 +77,23 @@ test("Poisson probabilities are finite and bounded", () => {
   assert.equal(c.poissonOverLine(-1, 2), null);
 });
 
-test("normalization rejects results without teams or final score", () => {
+test("normalization preserves partial match data without inventing missing values", () => {
   const c = loadFunctions(["getValue", "numberValue", "normalizeResult"]);
-  assert.equal(c.normalizeResult({home:"Porto", away:"Benfica", ft_home:"2"}), null);
+  assert.equal(c.normalizeResult({home:"Porto", away:""}), null);
+
+  const partial = c.normalizeResult({home:"Porto", away:"Benfica", home_corners:"6"});
+  assert.equal(partial.home, "Porto");
+  assert.equal(partial.away, "Benfica");
+  assert.equal(partial.homeGoals, null);
+  assert.equal(partial.awayGoals, null);
+  assert.equal(partial.homeCorners, 6);
+  assert.equal(partial.awayCorners, null);
+
   const valid = c.normalizeResult({home:"Porto", away:"Benfica", ft_home:"2", ft_away:"1"});
   assert.equal(valid.homeGoals, 2);
   assert.equal(valid.awayGoals, 1);
   assert.equal(valid.homeCorners, null);
+
   const withCorners = c.normalizeResult({home:"Porto", away:"Benfica", ft_home:"2", ft_away:"1", home_corners:"6", away_corners:"4", home_corners_1h:"3", away_corners_1h:"2"});
   assert.equal(withCorners.homeCorners, 6);
   assert.equal(withCorners.awayCorners, 4);

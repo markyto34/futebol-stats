@@ -132,7 +132,7 @@ function normalizeResult(row) {
     "ft_away", "away_score", "away_goals", "FTAG"
   ]));
 
-  if (!home || !away || homeGoals === null || awayGoals === null) {
+  if (!home || !away) {
     return null;
   }
 
@@ -241,8 +241,10 @@ function teamStats(team, venue = "all", limit = 10) {
 
   for (const m of games) {
     const isHome = m.home === team;
-    scored.push(isHome ? m.homeGoals : m.awayGoals);
-    conceded.push(isHome ? m.awayGoals : m.homeGoals);
+    const goalsFor = isHome ? m.homeGoals : m.awayGoals;
+    const goalsAgainst = isHome ? m.awayGoals : m.homeGoals;
+    if (goalsFor !== null && Number.isFinite(goalsFor)) scored.push(goalsFor);
+    if (goalsAgainst !== null && Number.isFinite(goalsAgainst)) conceded.push(goalsAgainst);
 
     if (m.homeCorners !== null && m.awayCorners !== null) {
       const own = isHome ? m.homeCorners : m.awayCorners;
@@ -362,8 +364,12 @@ function expectedGoalsForMatch(home, away, sampleLimit = 20) {
   if (league.home === null || league.away === null ||
       league.home <= 0 || league.away <= 0) return null;
 
-  const homeGames = recentTeamGames(home, "home", sampleLimit);
-  const awayGames = recentTeamGames(away, "away", sampleLimit);
+  const homeGames = recentTeamGames(home, "home", "all")
+    .filter(m => m.homeGoals !== null && m.awayGoals !== null)
+    .slice(0, Number(sampleLimit));
+  const awayGames = recentTeamGames(away, "away", "all")
+    .filter(m => m.homeGoals !== null && m.awayGoals !== null)
+    .slice(0, Number(sampleLimit));
 
   // Usar uma amostra maior, mantendo apenas jogos no estádio relevante.
   if (homeGames.length < 1 || awayGames.length < 1) return null;
@@ -739,9 +745,10 @@ async function loadGames() {
   const league = $("league").value;
   const season = $("season").value;
   const button = $("load");
+  const base = `https://raw.githubusercontent.com/oladeeayo/open-matchday/master/data/${league}/`;
 
   button.disabled = true;
-  $("status").textContent = "A carregar resultados históricos...";
+  $("status").textContent = "A carregar resultados históricos e calendário...";
   $("fixtureStatus").textContent = "A procurar o calendário...";
   $("fixtures").innerHTML = "";
   $("stats").innerHTML = "";
@@ -749,137 +756,110 @@ async function loadGames() {
   matches = [];
   fixturesData = [];
 
-  const base =
-    `https://raw.githubusercontent.com/oladeeayo/open-matchday/master/data/${league}/`;
+  let resultsMessage = "";
+  let sourceUpdateLabel = "A data de atualização da fonte não está disponível.";
 
+  // Os resultados e o calendário são carregados de forma independente:
+  // a ausência de resultados não deve impedir a apresentação dos próximos jogos.
   try {
     const response = await cachedFetchText(`${base}results_${season}.csv`, token);
     if (token !== loadToken || response.stale) return;
-
-    if (!response.ok) {
-      throw new Error(
-        `Não foi possível obter os resultados (HTTP ${response.status}).`
-      );
+    if (response.ok) {
+      matches = parseCSV(response.text).map(normalizeResult).filter(Boolean);
+      if (!matches.length) resultsMessage = "O ficheiro de resultados não contém jogos reconhecidos.";
+    } else {
+      resultsMessage = `Resultados históricos indisponíveis (HTTP ${response.status}).`;
     }
-
-    // A fonte publica a data da compilação em build_summary.json.
-    let sourceUpdateLabel = "A data de atualização da fonte não está disponível.";
-    try {
-      const summaryResponse = await fetch("https://raw.githubusercontent.com/oladeeayo/open-matchday/master/build_summary.json");
-      if (token !== loadToken) return;
-      if (summaryResponse.ok) {
-        const summary = await summaryResponse.json();
-        if (token !== loadToken) return;
-        const leagueInfo = Array.isArray(summary.leagues)
-          ? summary.leagues.find(item => item.folder === "data/" + league)
-          : null;
-        const generated = summary.generated_utc ? new Date(summary.generated_utc) : null;
-        const generatedLabel = generated && !Number.isNaN(generated.getTime())
-          ? generated.toLocaleString("pt-PT", { dateStyle: "short", timeStyle: "short", timeZone: "Europe/Lisbon" })
-          : null;
-        const latestLabel = leagueInfo && leagueInfo.latest
-          ? new Date(leagueInfo.latest + "T12:00:00Z").toLocaleDateString("pt-PT", { dateStyle: "short", timeZone: "Europe/Lisbon" })
-          : null;
-        if (generatedLabel && latestLabel) {
-          sourceUpdateLabel = "Última compilação da fonte: " + generatedLabel + " (hora de Portugal). Último jogo registado nesta competição: " + latestLabel + ".";
-        } else if (generatedLabel) {
-          sourceUpdateLabel = "Última compilação da fonte: " + generatedLabel + " (hora de Portugal); a fonte não indicou a data do último jogo desta competição.";
-        }
-      }
-    } catch (metadataError) {
-      console.warn("Não foi possível obter a data da fonte:", metadataError);
-    }
-
-    const csv = response.text;
-    if (token !== loadToken) return;
-    matches = parseCSV(csv).map(normalizeResult).filter(Boolean);
-
-    if (!matches.length) {
-      throw new Error(
-        "O ficheiro foi carregado, mas não foram reconhecidos resultados válidos."
-      );
-    }
-
-    const teams = [...new Set(matches.flatMap(m => [m.home, m.away]))]
-      .sort((a, b) => a.localeCompare(b));
-
-    populateTeamSelectors(teams);
-    renderX12HT();
-    renderCornersHT();
-
-    $("status").textContent =
-      `${matches.length} resultados carregados; ${teams.length} equipas encontradas. ${sourceUpdateLabel} Já podes escolher as equipas para a análise.`;
-
-    try {
-      const fixtureResponse =
-        await cachedFetchText(`${base}fixtures_${season}.csv`, token);
-      if (token !== loadToken || fixtureResponse.stale) return;
-
-      if (fixtureResponse.ok) {
-        const fixtureCSV = fixtureResponse.text;
-        if (token !== loadToken) return;
-
-        fixturesData = parseCSV(fixtureCSV)
-          .map(normalizeFixture)
-          .filter(Boolean);
-
-        // Evita repetir jogos que já estejam nos resultados históricos.
-        const fixtureKey = m => [
-          normalizeDateKey(m.date),
-          String(m.home || "").trim().toLowerCase(),
-          String(m.away || "").trim().toLowerCase()
-        ].join("|");
-
-        const playedKeys = new Set(matches.map(fixtureKey));
-        fixturesData = fixturesData.filter(m => !playedKeys.has(fixtureKey(m)));
-      }
-    } catch (e) {
-      console.warn("Calendário indisponível:", e);
-    }
-
-    renderStats($("team").value);
-    renderFixtures();
-
-    if (teams.length > 1) {
-      renderBttsAnalysis();
-    }
-
   } catch (error) {
     if (token !== loadToken) return;
-    console.error(error);
-    $("status").textContent = `Erro: ${error.message}`;
-    $("fixtureStatus").textContent =
-      "Não foi possível carregar os dados.";
-
-    $("stats").innerHTML = "";
-    $("venueStats").innerHTML =
-      '<tr><td colspan="7">Sem dados disponíveis.</td></tr>';
-    $("recent").innerHTML =
-      '<tr><td colspan="6">Sem dados disponíveis.</td></tr>';
-    $("fixtures").innerHTML = "";
-    $("bttsResult").innerHTML =
-      `<p>${esc(error.message)}</p>`;
-
-    [
-      "bttsHome", "bttsAway", "analyseBtts",
-      "x12Home", "x12Away", "analyseX12",
-      "cornerHome", "cornerAway", "analyseCorners",
-      "goalHome", "goalAway", "analyseGoals"
-    ].forEach(id => {
-      const element = $(id);
-      if (element) element.disabled = true;
-    });
-    const x12Result = $("x12Result");
-    if (x12Result) {
-      x12Result.innerHTML =
-        "<p>Não foi possível ativar a previsão porque os dados não foram carregados. Verifica a mensagem acima e tenta carregar novamente.</p>";
-    }
-
-  } finally {
-    if (token === loadToken) button.disabled = false;
+    resultsMessage = "Não foi possível carregar os resultados históricos: " + error.message;
   }
-}
 
+  // Metadados são opcionais e nunca bloqueiam os dados principais.
+  try {
+    const summaryResponse = await fetch("https://raw.githubusercontent.com/oladeeayo/open-matchday/master/build_summary.json");
+    if (token !== loadToken) return;
+    if (summaryResponse.ok) {
+      const summary = await summaryResponse.json();
+      if (token !== loadToken) return;
+      const leagueInfo = Array.isArray(summary.leagues)
+        ? summary.leagues.find(item => item.folder === "data/" + league) : null;
+      const generated = summary.generated_utc ? new Date(summary.generated_utc) : null;
+      const generatedLabel = generated && !Number.isNaN(generated.getTime())
+        ? generated.toLocaleString("pt-PT", { dateStyle: "short", timeStyle: "short", timeZone: "Europe/Lisbon" }) : null;
+      const latestLabel = leagueInfo && leagueInfo.latest
+        ? new Date(leagueInfo.latest + "T12:00:00Z").toLocaleDateString("pt-PT", { dateStyle: "short", timeZone: "Europe/Lisbon" }) : null;
+      if (generatedLabel && latestLabel) {
+        sourceUpdateLabel = "Última compilação da fonte: " + generatedLabel + " (hora de Portugal). Último jogo registado nesta competição: " + latestLabel + ".";
+      } else if (generatedLabel) {
+        sourceUpdateLabel = "Última compilação da fonte: " + generatedLabel + " (hora de Portugal).";
+      }
+    }
+  } catch (metadataError) {
+    console.warn("Não foi possível obter a data da fonte:", metadataError);
+  }
+
+  try {
+    const fixtureResponse = await cachedFetchText(`${base}fixtures_${season}.csv`, token);
+    if (token !== loadToken || fixtureResponse.stale) return;
+    if (fixtureResponse.ok) {
+      fixturesData = parseCSV(fixtureResponse.text).map(normalizeFixture).filter(Boolean);
+    } else {
+      $("fixtureStatus").textContent = `Calendário indisponível (HTTP ${fixtureResponse.status}).`;
+    }
+  } catch (error) {
+    if (token !== loadToken) return;
+    $("fixtureStatus").textContent = "Não foi possível carregar o calendário: " + error.message;
+  }
+
+  // Evitar duplicados entre resultados e calendário, incluindo jogos históricos parciais.
+  const fixtureKey = m => [
+    normalizeDateKey(m.date),
+    String(m.home || "").trim().toLowerCase(),
+    String(m.away || "").trim().toLowerCase()
+  ].join("|");
+  const playedKeys = new Set(matches.map(fixtureKey));
+  fixturesData = fixturesData.filter(m => !playedKeys.has(fixtureKey(m)));
+
+  const teams = [...new Set([
+    ...matches.flatMap(m => [m.home, m.away]),
+    ...fixturesData.flatMap(m => [m.home, m.away])
+  ])].filter(Boolean).sort((a, b) => a.localeCompare(b));
+
+  if (!teams.length) {
+    $("status").textContent = [
+      resultsMessage || "Não foram encontrados resultados históricos.",
+      "Também não foi encontrado um calendário utilizável para esta competição e época."
+    ].join(" ");
+    $("fixtureStatus").textContent = "Sem calendário disponível.";
+    button.disabled = false;
+    return;
+  }
+
+  populateTeamSelectors(teams);
+  renderX12HT();
+  renderCornersHT();
+
+  const historicalCount = matches.length;
+  $("status").textContent =
+    `${historicalCount} jogo(s) histórico(s) reconhecido(s); ${teams.length} equipas encontradas. ${resultsMessage} ${sourceUpdateLabel}`.trim();
+
+  if (matches.length) renderStats($("team").value);
+  else {
+    $("teamTitle").textContent = "Estatísticas — sem histórico disponível";
+    $("stats").innerHTML = '<p class="muted">Não existem resultados históricos válidos nesta competição/época. As estatísticas e previsões que dependem do histórico serão apresentadas como N/D.</p>';
+    $("venueStats").innerHTML = '<tr><td colspan="7">Sem dados históricos disponíveis.</td></tr>';
+    $("recent").innerHTML = '<tr><td colspan="6">Sem dados históricos disponíveis.</td></tr>';
+  }
+
+  renderFixtures();
+  if (teams.length > 1 && matches.length) renderBttsAnalysis();
+  else if (teams.length > 1) {
+    $("bttsResult").innerHTML = "<p>Há equipas no calendário, mas faltam resultados históricos para calcular probabilidades. Não serão inventadas estimativas.</p>";
+  }
+  button.disabled = false;
+}
+ 
 // Verifica os elementos principais antes de ativar os eventos.
 const requiredIds = [
   "league", "season", "team", "period", "load",
